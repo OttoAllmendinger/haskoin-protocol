@@ -1,5 +1,6 @@
 module Haskoin.Protocol
-( Addr(..)
+( Message(..)
+, Addr(..)
 , Alert(..)
 , BlockHeader(..)
 , Block(..)
@@ -20,6 +21,7 @@ module Haskoin.Protocol
 , Version(..)
 ) where
 
+import Haskoin.Protocol.Message
 import Haskoin.Protocol.Addr
 import Haskoin.Protocol.Alert
 import Haskoin.Protocol.BlockHeader

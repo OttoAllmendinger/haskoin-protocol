@@ -16,7 +16,8 @@ cabal-version:       >= 1.9.2
 
 library
     exposed-modules:   Haskoin.Protocol
-    other-modules:     Haskoin.Protocol.VarInt, 
+    other-modules:     Haskoin.Protocol.Message 
+                       Haskoin.Protocol.VarInt, 
                        Haskoin.Protocol.BlockHeader, 
                        Haskoin.Protocol.Addr, 
                        Haskoin.Protocol.Tx, 
