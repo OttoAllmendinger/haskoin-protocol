@@ -25,52 +25,63 @@ import Data.Binary.Put
     )
 
 import Haskoin.Util (stringToBS, bsToString)
+import Haskoin.Crypto (CheckSum32)
 
 data MessageCommand =
+        MCVersion |
+        MCVerAck |
         MCAddr |
-        MCAlert |
-        MCBlockHeader |
-        MCBlock |
-        MCGetBlocks |
-        MCGetData |
-        MCGetHeaders |
-        MCHeaders |
         MCInv |
-        MCPing |
+        MCGetData |
+        MCNotFound |
+        MCGetBlocks |
+        MCGetHeaders |
         MCTx |
-        MCVersion
+        MCBlock |
+        MCHeaders |
+        MCGetAddr |
+        MCPing |
+        MCPong |
+        MCAlert
         deriving (Eq, Show)
 
 instance Binary MessageCommand where
     
     get = go =<< getByteString 12
-        where go bs = return $ case unpackCommand bs of
-                "addr"        -> MCAddr
-                "alert"       -> MCAlert
-                "blockheader" -> MCBlockHeader
-                "block"       -> MCBlock
-                "getblocks"   -> MCGetBlocks
-                "getdata"     -> MCGetData
-                "getheaders"  -> MCGetHeaders
-                "headers"     -> MCHeaders
-                "inv"         -> MCInv
-                "ping"        -> MCPing
-                "tx"          -> MCTx
-                "version"     -> MCVersion
+        where go bs = case unpackCommand bs of
+                "version"    -> return MCVersion
+                "verack"     -> return MCVerAck
+                "addr"       -> return MCAddr
+                "inv"        -> return MCInv
+                "getdata"    -> return MCGetData
+                "notfound"   -> return MCNotFound
+                "getblocks"  -> return MCGetBlocks
+                "getheaders" -> return MCGetHeaders
+                "tx"         -> return MCTx
+                "block"      -> return MCBlock
+                "headers"    -> return MCHeaders
+                "getaddr"    -> return MCGetAddr
+                "ping"       -> return MCPing
+                "pong"       -> return MCPong
+                "alert"      -> return MCAlert
+                _            -> fail "get MessageCommand : Invalid command"
 
     put mc = putByteString $ packCommand $ case mc of
-        MCAddr        -> "addr"
-        MCAlert       -> "alert"
-        MCBlockHeader -> "blockheader"
-        MCBlock       -> "block"
-        MCGetBlocks   -> "getblocks"
-        MCGetData     -> "getdata"
-        MCGetHeaders  -> "getheaders"
-        MCHeaders     -> "headers"
-        MCInv         -> "inv"
-        MCPing        -> "ping"
-        MCTx          -> "tx"
         MCVersion     -> "version"
+        MCVerAck      -> "verack"
+        MCAddr        -> "addr"
+        MCInv         -> "inv"
+        MCGetData     -> "getdata"
+        MCNotFound    -> "notfound"
+        MCGetBlocks   -> "getblocks"
+        MCGetHeaders  -> "getheaders"
+        MCTx          -> "tx"
+        MCBlock       -> "block"
+        MCHeaders     -> "headers"
+        MCGetAddr     -> "getaddr"
+        MCPing        -> "ping"
+        MCPong        -> "pong"
+        MCAlert       -> "alert"
 
 packCommand :: String -> BS.ByteString
 packCommand s = stringToBS $ take 12 $ s ++ repeat '\NUL'
@@ -82,7 +93,7 @@ data MessageHeader = MessageHeader {
     headMagic       :: !Word32,
     headCmd         :: !MessageCommand,
     headPayloadSize :: !Word32,
-    headChecksum    :: !Word32
+    headChecksum    :: !CheckSum32
 } deriving (Eq, Show)
 
 instance Binary MessageHeader where
@@ -90,11 +101,11 @@ instance Binary MessageHeader where
     get = MessageHeader <$> getWord32be
                         <*> get
                         <*> getWord32le
-                        <*> getWord32be
+                        <*> get
 
-    put (MessageHeader m c l cs) = do
+    put (MessageHeader m c l chk) = do
         putWord32be m
         put         c
         putWord32le l
-        putWord32be cs
+        put         chk
 
