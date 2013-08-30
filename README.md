@@ -80,7 +80,83 @@ All the types and functions in this section are exported by `Haskoin.Protocol`
   import Haskoin.Protocol
 ```
 
-Todo ...
+All types in this library are instances of `Data.Binary` and can be serialized
+and de-serialized easily. Here is an example using the `VarInt` type:
+
+```haskell
+    import Haskoin.Protocol
+    import Data.Binary (get, put)
+    import Data.Binary.Get (runGet)
+    import Data.Binary.Put (runPut)
+
+    main :: IO ()
+    main = do
+        let varint   = VarInt 10 
+
+            -- Serialize a bitcoin protocol type
+            -- See Data.Binary.Put for more details
+            bs       = runPut $ put varint
+
+            -- De-serialize a bitcoin protocol type
+            -- See Data.Binary.Get for more details
+            original = runGet get bs :: VarInt
+
+        return ()
+```
+
+### BlockHeader
+
+```haskell
+    data BlockHeader = BlockHeader {
+        blockVersion   :: Word32,
+        prevBlock      :: Hash256,
+        merkleRoot     :: Hash256,
+        blockTimestamp :: Word32,
+        blockBits      :: Word32,
+        bhNonce        :: Word32
+    } 
+```
+
+### Block
+
+```haskell
+    data Block = Block {
+        blockHeader     :: BlockHeader,
+        blockCoinbaseTx :: CoinbaseTx,
+        blockTxns       :: [Tx]
+    } 
+```
+
+### GetBlocks
+
+```haskell
+    type BlockLocator = [Hash256]
+
+    data GetBlocks = GetBlocks {
+        getBlocksVersion  :: Word32,
+        getBlocksLocator  :: BlockLocator,
+        getBlocksHashStop :: Hash256
+    } 
+```
+
+### Addr
+
+```haskell
+    type NetworkAddressTime = (Word32, NetworkAddress)
+
+    data Addr = Addr {
+        addrList :: [NetworkAddressTime]
+    } 
+```
+
+### Alert
+
+```haskell
+    data Alert = Alert {
+        alertPayload   :: VarString,
+        alertSignature :: VarString
+    } 
+```
 
 ## Dependencies
 
@@ -118,13 +194,24 @@ Todo ...
     cabal install
 ```
 
-For running the test suites
+### Tests
+
+If you are missing the test dependencies:
 
 ```sh
-    cabal configure --enable-test
+    cabal install --enable-tests
+    cabal test
+```
+
+If you have the test dependencies, you can build without installing:
+
+```sh
+    cabal configure --enable-tests
     cabal build
     cabal test
 ```
+
+The tests can take a few minutes to run.
 
 ## Bugs
 
