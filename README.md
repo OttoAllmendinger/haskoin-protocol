@@ -7,7 +7,7 @@ Project Status: **Experimental**
 ## Description
 
 **haskoin-protocol** is a component of **haskoin**, an ecosystem of haskell
-libraries implementing the various parts of the bitcoin protocol. This library
+libraries implementing the various parts of the Bitcoin protocol. This library
 provides an implementation of the network types and messages used in the
 Bitcoin protocol. It also provides the binary serialization and
 de-serialization routines required for sending and reading the Bitcoin protocol
@@ -104,6 +104,156 @@ and de-serialized easily. Here is an example using the `VarInt` type:
         return ()
 ```
 
+## Bitcoin Protocol Messages
+
+Bitcoin protocol messages are exchanged between Bitcoin nodes. The definition
+of these messages in given here.
+
+### MessageHeader
+
+```haskell
+    data MessageCommand =
+            MCVersion |
+            MCVerAck |
+            MCAddr |
+            MCInv |
+            MCGetData |
+            MCNotFound |
+            MCGetBlocks |
+            MCGetHeaders |
+            MCTx |
+            MCBlock |
+            MCHeaders |
+            MCGetAddr |
+            MCPing |
+            MCPong |
+            MCAlert
+
+    data MessageHeader = MessageHeader {
+        headMagic       :: Word32,
+        headCmd         :: MessageCommand,
+        headPayloadSize :: Word32,
+        headChecksum    :: CheckSum32
+    }
+```
+
+### Message
+
+```haskell
+    -- Algebraic data type describing a Bitcoin protocol message
+    data Message = 
+        MVersion Version | 
+        MVerAck | 
+        MAddr Addr | 
+        MInv Inv |
+        MGetData GetData |
+        MNotFound NotFound |
+        MGetBlocks GetBlocks |
+        MGetHeaders GetHeaders |
+        MTx Tx |
+        MBlock Block |
+        MHeaders Headers |
+        MGetAddr |
+        MPing Ping |
+        MPong Pong |
+        MAlert Alert
+```
+
+## Protocol Types
+
+### VarInt
+
+```haskell
+    newtype VarInt = VarInt { getVarInt :: Word64 }
+```
+
+### VarString
+
+```haskell
+    newtype VarString = VarString { getVarString :: BS.ByteString }
+```
+
+### NetworkAddress
+
+```haskell
+    data NetworkAddress = NetworkAddress {
+        naServices :: Word64,
+        naAddress  :: (Word64, Word64),
+        naPort     :: Word16
+    }
+```
+
+### Script
+
+```haskell
+    data ScriptOp =
+
+        -- Pushing Data
+        OP_PUSHDATA BS.ByteString |
+        OP_FALSE | 
+        OP_1NEGATE | 
+        OP_TRUE |
+        OP_2  | OP_3  | OP_4  | OP_5  | OP_6  | 
+        OP_7  | OP_8  | OP_9  | OP_10 | OP_11 | 
+        OP_12 | OP_13 | OP_14 | OP_15 | OP_16 |
+
+        -- Flow control
+        OP_VERIFY |
+
+        -- Stack operations
+        OP_DUP |
+
+        -- Bitwise logic
+        OP_EQUAL |
+        OP_EQUALVERIFY | 
+
+        -- Crypto
+        OP_HASH160 |
+        OP_CHECKSIG |
+        OP_CHECKMULTISIG |
+
+        -- Other
+        OP_PUBKEY PublicKey |
+        OP_INVALIDOPCODE Word8
+
+    newtype Script = Script { runScript :: [ScriptOp] }
+```
+
+### Tx
+
+```haskell
+    data Tx = Tx {
+        txVersion  :: Word32,
+        txIn       :: [TxIn],
+        txOut      :: [TxOut],
+        txLockTime :: Word32
+    }
+
+    data CoinbaseTx = CoinbaseTx {
+        cbVersion  :: Word32,
+        cbData     :: BS.ByteString,
+        cbOut      :: [TxOut],
+        cbLockTime :: Word32
+    } 
+
+    data TxIn = TxIn {
+        prevOutput   :: OutPoint,
+        sigScript    :: Script,
+        txInSequence :: Word32
+    } 
+
+    data TxOut = TxOut {
+        outValue     :: Word64,
+        scriptPubKey :: Script
+    }
+
+    data OutPoint = OutPoint {
+        outPointHash  :: Hash256,
+        outPointIndex :: Word32
+    }
+
+```
+
 ### BlockHeader
 
 ```haskell
@@ -139,6 +289,69 @@ and de-serialized easily. Here is an example using the `VarInt` type:
     } 
 ```
 
+### GetHeaders
+
+```haskell
+    data GetHeaders = GetHeaders {
+        getHeadersVersion  :: Word32,
+        getHeadersBL       :: BlockLocator,
+        getHeadersHashStop :: Hash256
+    } 
+```
+
+### InvVector
+
+```haskell
+    data InvType = InvError | InvTx | InvBlock
+
+    data InvVector = InvVector {
+        invType :: InvType,
+        invHash :: Hash256
+    }
+```
+
+### GetData
+
+```haskell
+    data GetData = GetData {
+      getDataList :: [InvVector] 
+    }
+```
+
+### Inv
+
+```haskell
+    data Inv = Inv {
+      invList :: [InvVector] 
+    }
+```
+
+### Headers
+
+```haskell
+    type BlockHeaderCount = (BlockHeader, VarInt)
+
+    data Headers = Headers {
+        headersList :: [BlockHeaderCount]
+    } 
+```
+
+### Version
+
+```haskell
+    data Version = Version {
+        version     :: Word32,
+        services    :: Word64,
+        timestamp   :: Word64,
+        addrRecv    :: NetworkAddress,
+        addrSend    :: NetworkAddress,
+        verNonce    :: Word64,
+        userAgent   :: VarString,
+        startHeight :: Word32,
+        relay       :: Bool
+    }
+```
+
 ### Addr
 
 ```haskell
@@ -147,6 +360,22 @@ and de-serialized easily. Here is an example using the `VarInt` type:
     data Addr = Addr {
         addrList :: [NetworkAddressTime]
     } 
+```
+
+### Ping
+
+```haskell
+    newtype Ping = Ping { pingNonce :: Word64 } 
+
+    newtype Pong = Pong { pongNonce :: Word64 } 
+```
+
+### NotFound
+
+```haskell
+    data NotFound = NotFound {
+      notFoundList :: [InvVector] 
+    }
 ```
 
 ### Alert

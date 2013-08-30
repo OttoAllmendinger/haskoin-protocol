@@ -17,9 +17,9 @@ import Data.Binary.Put
     )
 
 data NetworkAddress = NetworkAddress {
-    naServices :: Word64,
-    naAddress  :: (Word64, Word64),
-    naPort     :: Word16
+    naServices :: !Word64,
+    naAddress  :: !(Word64, Word64),
+    naPort     :: !Word16
 } deriving (Eq, Show)
 
 instance Binary NetworkAddress where
