@@ -31,6 +31,7 @@ import qualified Data.ByteString as BS
 
 import Haskoin.Protocol.VarInt
 import Haskoin.Util (isolate, toStrictBS)
+import Haskoin.Crypto (PublicKey)
 
 newtype Script = Script { runScript :: [ScriptOp] }
     deriving (Eq, Show)
@@ -83,7 +84,7 @@ data ScriptOp =
     OP_CHECKMULTISIG |
 
     -- Other
-    OP_PUBKEY BS.ByteString |
+    OP_PUBKEY PublicKey |
     OP_INVALIDOPCODE Word8
         deriving (Eq, Show)
 
@@ -130,9 +131,7 @@ instance Binary ScriptOp where
                     | op == 0xa9 = return $ OP_HASH160
                     | op == 0xac = return $ OP_CHECKSIG
                     | op == 0xae = return $ OP_CHECKMULTISIG
-                    | op == 0xfe = do
-                        payload <- getByteString 59
-                        return $ OP_PUBKEY payload
+                    | op == 0xfe = OP_PUBKEY <$> get
                     | otherwise = return $ OP_INVALIDOPCODE op
 
     put op = case op of
@@ -183,6 +182,6 @@ instance Binary ScriptOp where
         OP_HASH160           -> putWord8 0xa9
         OP_CHECKSIG          -> putWord8 0xac
         OP_CHECKMULTISIG     -> putWord8 0xae
-        (OP_PUBKEY bs)       -> putWord8 0xfe >> putByteString bs
+        (OP_PUBKEY pk)       -> putWord8 0xfe >> put pk
         (OP_INVALIDOPCODE _) -> putWord8 0xff
 

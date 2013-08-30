@@ -5,10 +5,14 @@ import Test.QuickCheck
 import Control.Monad
 import Control.Applicative 
 
+import Data.Binary
+import Data.Binary.Get
+import Data.Binary.Put
 import qualified Data.ByteString as BS
 
 import Haskoin.Protocol
-import Haskoin.Crypto (Hash256, hash256)
+import Haskoin.Util (toStrictBS)
+import Haskoin.Crypto (Hash256, hash256, derivePublicKey, makePrivateKey)
 
 instance Arbitrary VarInt where
     arbitrary = VarInt <$> arbitrary
@@ -100,10 +104,54 @@ instance Arbitrary Block where
 instance Arbitrary ScriptOp where
     arbitrary = oneof [ OP_PUSHDATA <$> nonEmptyByteString
                       , return OP_FALSE
+                      , return OP_1NEGATE
+                      , return OP_TRUE
+                      , return OP_2, return OP_3, return OP_4, return OP_5
+                      , return OP_6, return OP_7, return OP_8, return OP_9
+                      , return OP_10, return OP_11, return OP_12, return OP_13
+                      , return OP_14, return OP_15, return OP_16
+                      , return OP_VERIFY
+                      , return OP_DUP
+                      , return OP_EQUAL
+                      , return OP_EQUALVERIFY
+                      , return OP_HASH160
+                      , return OP_CHECKSIG
+                      , return OP_CHECKMULTISIG
+                      , OP_PUBKEY <$> do
+                            i <- choose (1, 2^256-1)
+                            return $ derivePublicKey $ makePrivateKey i
+                      , return $ OP_INVALIDOPCODE 0xff
                       ]
 
 instance Arbitrary Script where
-    arbitrary = Script <$> listOf arbitrary
+    arbitrary = do
+        i <- choose (1,20)
+        Script <$> vectorOf i arbitrary
+
+instance Arbitrary GetBlocks where
+    arbitrary = GetBlocks <$> arbitrary
+                          <*> (listOf (hash256 <$> arbitrary))
+                          <*> (hash256 <$> arbitrary)
+
+instance Arbitrary GetData where
+    arbitrary = GetData <$> (listOf arbitrary)
+
+instance Arbitrary GetHeaders where
+    arbitrary = GetHeaders <$> arbitrary
+                           <*> (listOf (hash256 <$> arbitrary))
+                           <*> (hash256 <$> arbitrary)
+
+instance Arbitrary Headers where
+    arbitrary = Headers <$> (listOf (liftM2 (,) arbitrary arbitrary))
+
+instance Arbitrary NotFound where
+    arbitrary = NotFound <$> (listOf arbitrary)
+
+instance Arbitrary Ping where
+    arbitrary = Ping <$> arbitrary
+
+instance Arbitrary Pong where
+    arbitrary = Pong <$> arbitrary
 
 -- from Data.ByteString project
 instance Arbitrary BS.ByteString where

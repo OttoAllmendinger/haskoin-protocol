@@ -15,6 +15,7 @@ module Haskoin.Protocol
 , NetworkAddress(..)
 , NotFound(..)
 , Ping(..)
+, Pong(..)
 , Script(..)
 , ScriptOp(..)
 , Tx(..)
