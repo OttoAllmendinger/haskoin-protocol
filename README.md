@@ -107,7 +107,7 @@ and de-serialized easily. Here is an example using the `VarInt` type:
 ## Bitcoin Protocol Messages
 
 Bitcoin protocol messages are exchanged between Bitcoin nodes. The definition
-of these messages in given here.
+of these messages is given here.
 
 ### MessageHeader
 
@@ -138,6 +138,9 @@ of these messages in given here.
 ```
 
 ### Message
+
+When serializing a `Message`, the `MessageHeader` is automatically computed and
+added to the resulting `ByteString`.
 
 ```haskell
     -- Algebraic data type describing a Bitcoin protocol message
