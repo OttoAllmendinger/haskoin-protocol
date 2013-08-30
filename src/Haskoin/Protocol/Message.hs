@@ -62,27 +62,31 @@ instance Binary Message where
             (fail $ "get: Invalid network magic bytes: " ++ (show mgc))
         unless (chksum32 bs == chk) 
             (fail $ "get: Invalid message checksum: " ++ (show chk))
-        isolate (fromIntegral len) $ case cmd of
-            MCVersion    -> MVersion <$> get
-            MCVerAck     -> return MVerAck
-            MCAddr       -> MAddr <$> get
-            MCInv        -> MInv <$> get
-            MCGetData    -> MGetData <$> get
-            MCNotFound   -> MNotFound <$> get
-            MCGetBlocks  -> MGetBlocks <$> get
-            MCGetHeaders -> MGetHeaders <$> get
-            MCTx         -> MTx <$> get
-            MCBlock      -> MBlock <$> get
-            MCHeaders    -> MHeaders <$> get
-            MCGetAddr    -> return MGetAddr 
-            MCPing       -> MPing <$> get
-            MCPong       -> MPong <$> get
-            MCAlert      -> MAlert <$> get
+        if (fromIntegral len) > 0 
+            then isolate (fromIntegral len) $ case cmd of
+                MCVersion    -> MVersion <$> get
+                MCAddr       -> MAddr <$> get
+                MCInv        -> MInv <$> get
+                MCGetData    -> MGetData <$> get
+                MCNotFound   -> MNotFound <$> get
+                MCGetBlocks  -> MGetBlocks <$> get
+                MCGetHeaders -> MGetHeaders <$> get
+                MCTx         -> MTx <$> get
+                MCBlock      -> MBlock <$> get
+                MCHeaders    -> MHeaders <$> get
+                MCPing       -> MPing <$> get
+                MCPong       -> MPong <$> get
+                MCAlert      -> MAlert <$> get
+                _            -> fail $ "get: Invalid command " ++ (show cmd)
+            else case cmd of
+                MCGetAddr    -> return MGetAddr 
+                MCVerAck     -> return MVerAck
+                _            -> fail $ "get: Invalid command " ++ (show cmd)
 
     put msg = do
         let (cmd, mPut) = case msg of
                 (MVersion m)    -> (MCVersion, put m)
-                (MVerAck)       -> (MCVersion, return ())
+                (MVerAck)       -> (MCVerAck, return ())
                 (MAddr m)       -> (MCAddr, put m)
                 (MInv m)        -> (MCInv, put m)
                 (MGetData m)    -> (MCGetData, put m)

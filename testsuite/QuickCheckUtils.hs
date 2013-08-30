@@ -12,7 +12,12 @@ import qualified Data.ByteString as BS
 
 import Haskoin.Protocol
 import Haskoin.Util (toStrictBS)
-import Haskoin.Crypto (Hash256, hash256, derivePublicKey, makePrivateKey)
+import Haskoin.Crypto 
+    ( hash256
+    , derivePublicKey
+    , makePrivateKey
+    , chksum32
+    )
 
 instance Arbitrary VarInt where
     arbitrary = VarInt <$> arbitrary
@@ -152,6 +157,48 @@ instance Arbitrary Ping where
 
 instance Arbitrary Pong where
     arbitrary = Pong <$> arbitrary
+
+instance Arbitrary MessageCommand where
+    arbitrary = elements [ MCVersion
+                         , MCVerAck
+                         , MCAddr
+                         , MCInv
+                         , MCGetData
+                         , MCNotFound
+                         , MCGetBlocks
+                         , MCGetHeaders
+                         , MCTx
+                         , MCBlock
+                         , MCHeaders
+                         , MCGetAddr
+                         , MCPing
+                         , MCPong
+                         , MCAlert
+                         ]
+
+instance Arbitrary MessageHeader where
+    arbitrary = MessageHeader <$> arbitrary
+                              <*> arbitrary
+                              <*> arbitrary
+                              <*> (chksum32 <$> arbitrary)
+
+instance Arbitrary Message where
+    arbitrary = oneof [ MVersion <$> arbitrary
+                      , return MVerAck
+                      , MAddr <$> arbitrary
+                      , MInv <$> arbitrary
+                      , MGetData <$> arbitrary
+                      , MNotFound <$> arbitrary
+                      , MGetBlocks <$> arbitrary
+                      , MGetHeaders <$> arbitrary
+                      , MTx <$> arbitrary
+                      , MBlock <$> arbitrary
+                      , MHeaders <$> arbitrary
+                      , return MGetAddr
+                      , MPing <$> arbitrary
+                      , MPong <$> arbitrary
+                      , MAlert <$> arbitrary
+                      ]
 
 -- from Data.ByteString project
 instance Arbitrary BS.ByteString where

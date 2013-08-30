@@ -13,7 +13,7 @@ import Haskoin.Protocol
 
 tests :: [Test]
 tests = 
-    [ testGroup "Serialize / deserialize protocol messages"
+    [ testGroup "Serialize & de-serialize protocol messages"
         [ testProperty "VarInt" (metaGetPut :: VarInt -> Bool)
         , testProperty "VarString" (metaGetPut :: VarString -> Bool)
         , testProperty "NetworkAddress" (metaGetPut :: NetworkAddress -> Bool)
@@ -39,6 +39,9 @@ tests =
         , testProperty "NotFound" (metaGetPut :: NotFound -> Bool)
         , testProperty "Ping" (metaGetPut :: Ping -> Bool)
         , testProperty "Pong" (metaGetPut :: Pong -> Bool)
+        , testProperty "MessageCommand" (metaGetPut :: MessageCommand -> Bool)
+        , testProperty "MessageHeader" (metaGetPut :: MessageHeader -> Bool)
+        , testProperty "Message" (metaGetPut :: Message -> Bool)
         ]
     ]
 

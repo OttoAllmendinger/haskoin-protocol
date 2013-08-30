@@ -11,6 +11,7 @@ module Haskoin.Protocol
 , Inv(..)
 , InvVector(..)
 , InvType(..)
+, MessageCommand(..)
 , MessageHeader(..)
 , NetworkAddress(..)
 , NotFound(..)
