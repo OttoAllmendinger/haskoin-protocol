@@ -78,10 +78,11 @@ instance Binary CoinbaseTx where
 
     put (CoinbaseTx v cb os l) = do
         putWord32le v
-        put $ VarInt (fromIntegral 1)
-        put $ OutPoint (fromIntegral 0) maxBound
+        put $ VarInt 1
+        put $ OutPoint 0 maxBound
         put $ VarInt $ fromIntegral $ BS.length cb
         putByteString cb 
+        putWord32le 0 --sequence number
         put $ VarInt $ fromIntegral $ length os
         forM_ os put
         putWord32le l

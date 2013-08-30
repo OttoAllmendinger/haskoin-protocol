@@ -139,6 +139,7 @@ instance Binary ScriptOp where
 
         (OP_PUSHDATA payload) -> go payload (BS.length payload)
             where go p len 
+                    | len <= 0 = fail "OP_PUSHDATA: data length must be > 0"
                     | len <= 0x4b = do
                         putWord8 $ fromIntegral len
                         putByteString p
