@@ -1,6 +1,4 @@
-import Data.Either (Either(Left, Right))
 import Data.Binary (encode, decodeOrFail)
-
 import Haskoin.Protocol
 import Haskoin.Util (stringToBS)
 

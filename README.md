@@ -16,9 +16,7 @@ messages from the network.
 ## Synopsis
 
 ```haskell
-    import Data.Either (Either(Left, Right))
     import Data.Binary (encode, decodeOrFail)
-
     import Haskoin.Protocol
     import Haskoin.Util (stringToBS)
 
@@ -89,7 +87,6 @@ All types in this library are instances of `Data.Binary` and can be serialized
 and de-serialized easily. Here is an example using the `VarInt` type:
 
 ```haskell
-    import Data.Either (Either(Left, Right))
     import Data.Binary (encode, decodeOrFail)
     import Haskoin.Protocol
 
