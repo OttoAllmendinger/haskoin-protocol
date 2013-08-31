@@ -16,10 +16,8 @@ messages from the network.
 ## Synopsis
 
 ```haskell
-
-    import Data.Binary (get, put)
-    import Data.Binary.Get (runGet)
-    import Data.Binary.Put (runPut)
+    import Data.Either (Either(Left, Right))
+    import Data.Binary (encode, decodeOrFail)
 
     import Haskoin.Protocol
     import Haskoin.Util (stringToBS)
@@ -48,28 +46,35 @@ messages from the network.
                                 , relay       = True
                                 }
 
-            -- Create version and verack messages 
-            -- Contains message headers when serialized
+            -- Create a Version message 
+            -- Will contain a message header when serialized
             versionMessage   = MVersion version
+
+            -- Create a VerAck message
+            -- Will contain a message header when serialized
             verackMessage    = MVerAck
 
-            -- Serialize version and verack messages (contains message header)
-            -- This produces a Data.ByteString.Lazy 
-            -- Check the Data.Binary.Put package for more details
-            versionMessageBS = runPut $ put versionMessage
-            verackMessageBS  = runPut $ put verackMessage
+            -- Serialize the version and verack messages 
+            -- This produces a Data.ByteString.Lazy
+            -- Check the Data.Binary package for more details
+            versionMessageBS = encode versionMessage
+            verackMessageBS  = encode verackMessage
 
         print $ "Serialized version message: " ++ (show versionMessageBS)
         print $ "Serialized verAck message: "  ++ (show verackMessageBS)
 
             -- Deserialize the version and verack messages from bytestrings
-            -- Check the Data.Binary.Get package for more details
-        let originalVersion = runGet get versionMessageBS :: Message
-            originalVerack  = runGet get verackMessageBS  :: Message
+            -- Check the Data.Binary package for more details
+        let originalVersion = case decodeOrFail versionMessageBS of
+                (Left  (_, _, err)) -> error err
+                (Right (_, _, msg)) -> msg :: Message
+
+            originalVerack = case decodeOrFail verackMessageBS of
+                (Left  (_, _, err)) -> error err
+                (Right (_, _, msg)) -> msg :: Message
 
         print $ "De-serialized version message: " ++ (show originalVersion)
         print $ "De-serialized verack message: "  ++ (show originalVerack)
-
 ```
 
 ## Usage
@@ -84,22 +89,24 @@ All types in this library are instances of `Data.Binary` and can be serialized
 and de-serialized easily. Here is an example using the `VarInt` type:
 
 ```haskell
+    import Data.Either (Either(Left, Right))
+    import Data.Binary (encode, decodeOrFail)
     import Haskoin.Protocol
-    import Data.Binary (get, put)
-    import Data.Binary.Get (runGet)
-    import Data.Binary.Put (runPut)
 
     main :: IO ()
     main = do
+            -- Create a type from this library
         let varint   = VarInt 10 
 
             -- Serialize a bitcoin protocol type
-            -- See Data.Binary.Put for more details
-            bs       = runPut $ put varint
+            -- See Data.Binary for more details
+            bs       = encode varint
 
             -- De-serialize a bitcoin protocol type
-            -- See Data.Binary.Get for more details
-            original = runGet get bs :: VarInt
+            -- See Data.Binary for more details
+            original = case decodeOrFail bs of
+                (Left  (_, _, err)) -> error err
+                (Right (_, _, res)) -> res :: VarInt
 
         return ()
 ```

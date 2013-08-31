@@ -1,6 +1,5 @@
-import Data.Binary (get, put)
-import Data.Binary.Get (runGet)
-import Data.Binary.Put (runPut)
+import Data.Either (Either(Left, Right))
+import Data.Binary (encode, decodeOrFail)
 
 import Haskoin.Protocol
 import Haskoin.Util (stringToBS)
@@ -29,25 +28,32 @@ main = do
                              , relay       = True
                              }
 
-        -- Create a Version message (contains message header when serialized)
+        -- Create a Version message 
+        -- Will contain a message header when serialized
         versionMessage   = MVersion version
 
         -- Create a VerAck message
+        -- Will contain a message header when serialized
         verackMessage    = MVerAck
 
-        -- Serialize the version and verack messages (contains message header)
-        -- This produces a Data.ByteString.Lazy 
-        -- Check the Data.Binary.Put package for more details
-        versionMessageBS = runPut $ put versionMessage
-        verackMessageBS  = runPut $ put verackMessage
+        -- Serialize the version and verack messages 
+        -- This produces a Data.ByteString.Lazy
+        -- Check the Data.Binary package for more details
+        versionMessageBS = encode versionMessage
+        verackMessageBS  = encode verackMessage
 
     print $ "Serialized version message: " ++ (show versionMessageBS)
     print $ "Serialized verAck message: "  ++ (show verackMessageBS)
 
         -- Deserialize the version and verack messages from bytestrings
-        -- Check the Data.Binary.Get package for more details
-    let originalVersion = runGet get versionMessageBS :: Message
-        originalVerack  = runGet get verackMessageBS  :: Message
+        -- Check the Data.Binary package for more details
+    let originalVersion = case decodeOrFail versionMessageBS of
+            (Left  (_, _, err)) -> error err
+            (Right (_, _, msg)) -> msg :: Message
+
+        originalVerack = case decodeOrFail verackMessageBS of
+            (Left  (_, _, err)) -> error err
+            (Right (_, _, msg)) -> msg :: Message
 
     print $ "De-serialized version message: " ++ (show originalVersion)
     print $ "De-serialized verack message: "  ++ (show originalVerack)

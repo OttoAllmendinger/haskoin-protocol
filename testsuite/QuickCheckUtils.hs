@@ -73,7 +73,7 @@ instance Arbitrary Tx where
             l <- choose (0,10)
             vectorOf l arbitrary
         tout <- do
-            l <- choose (0,50)
+            l <- choose (0,10)
             vectorOf l arbitrary
         t    <- arbitrary
         return $ Tx v tin tout t
@@ -102,7 +102,7 @@ instance Arbitrary Block where
         h <- arbitrary
         c <- arbitrary
         t <- do 
-            l <- choose (0,20)
+            l <- choose (0,10)
             vectorOf l arbitrary
         return $ Block h c t
 
@@ -130,7 +130,7 @@ instance Arbitrary ScriptOp where
 
 instance Arbitrary Script where
     arbitrary = do
-        i <- choose (1,20)
+        i <- choose (1,10)
         Script <$> vectorOf i arbitrary
 
 instance Arbitrary GetBlocks where
