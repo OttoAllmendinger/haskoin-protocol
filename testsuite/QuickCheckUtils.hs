@@ -6,6 +6,7 @@ import Control.Monad
 import Control.Applicative 
 
 import Data.Binary
+import Data.Maybe
 import Data.Binary.Get
 import Data.Binary.Put
 import qualified Data.ByteString as BS
@@ -124,7 +125,8 @@ instance Arbitrary ScriptOp where
                       , return OP_CHECKMULTISIG
                       , OP_PUBKEY <$> do
                             i <- choose (1, 2^256-1)
-                            return $ derivePublicKey $ makePrivateKey i
+                            let pk = fromJust $ makePrivateKey i
+                            return $ derivePublicKey pk
                       , return $ OP_INVALIDOPCODE 0xff
                       ]
 
