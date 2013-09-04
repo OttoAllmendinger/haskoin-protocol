@@ -220,7 +220,7 @@ added to the resulting `ByteString`.
         OP_CHECKMULTISIG |
 
         -- Other
-        OP_PUBKEY PublicKey |
+        OP_PUBKEY PubKey |
         OP_INVALIDOPCODE Word8
 
     newtype Script = Script { runScript :: [ScriptOp] }

@@ -31,7 +31,7 @@ import qualified Data.ByteString as BS
 
 import Haskoin.Protocol.VarInt
 import Haskoin.Util (isolate, toStrictBS)
-import Haskoin.Crypto (PublicKey)
+import Haskoin.Crypto (PubKey)
 
 newtype Script = Script { runScript :: [ScriptOp] }
     deriving (Eq, Show)
@@ -85,7 +85,7 @@ data ScriptOp =
     OP_CHECKMULTISIG |
 
     -- Other
-    OP_PUBKEY PublicKey |
+    OP_PUBKEY PubKey |
     OP_INVALIDOPCODE Word8
         deriving (Eq, Show)
 

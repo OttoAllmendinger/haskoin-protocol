@@ -15,8 +15,8 @@ import Haskoin.Protocol
 import Haskoin.Util (toStrictBS)
 import Haskoin.Crypto 
     ( hash256
-    , derivePublicKey
-    , makePrivateKey
+    , derivePubKey
+    , makePrvKey
     , chksum32
     )
 
@@ -125,8 +125,8 @@ instance Arbitrary ScriptOp where
                       , return OP_CHECKMULTISIG
                       , OP_PUBKEY <$> do
                             i <- choose (1, 2^256-1)
-                            let pk = fromJust $ makePrivateKey i
-                            return $ derivePublicKey pk
+                            let pk = fromJust $ makePrvKey i
+                            return $ derivePubKey pk
                       , return $ OP_INVALIDOPCODE 0xff
                       ]
 
