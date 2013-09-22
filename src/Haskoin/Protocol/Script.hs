@@ -33,8 +33,104 @@ import Haskoin.Protocol.VarInt
 import Haskoin.Util (isolate, toStrictBS)
 import Haskoin.Crypto (PubKey)
 
-newtype Script = Script { runScript :: [ScriptOp] }
-    deriving (Eq, Show)
+data MulSig2Type = OneOfTwo
+                 | TwoOfTwo
+                 deriving (Eq, Show)
+
+data MulSig3Type = OneOfThree
+                 | TwoOfThree
+                 | ThreeOfThree
+                 deriving (Eq, Show)
+
+data ScriptOutput = PayPubKey 
+                      { runPayPubKey     :: PubKey }
+                  | PayPubKeyHash 
+                      { runPayPubKeyHash :: Hash160 }
+                  | PayMulSig1 
+                      { runPayMulSig1    :: PubKey }
+                  | PayMulSig2
+                      { mulSig2Type      :: MulSig2Type
+                      , fstMulSigKey     :: PubKey
+                      , sndMulSigKey     :: PubKey
+                      }
+                  | PayMulSig3
+                      { mulSig3Type      :: MulSig3Type
+                      , fstMulSigKey     :: PubKey
+                      , sndMulSigKey     :: PubKey
+                      , trdMulSigKey     :: PubKey
+                      }
+                  | PayScriptHash 
+                      { runPayScriptHash :: Hash160 }
+                  | PayNonStd 
+                      { runPayNonStd     :: [ScriptOp] }
+                  deriving (Eq, Show)
+
+opsToScriptOutput :: [ScriptOp] -> ScriptOutput
+opsToScriptOutput ops = case ops of
+    [OP_PUSHDATA k, OP_CHECKSIG] 
+        -> either def (PayPubKey . lst) $ decodeOrFail' k
+    [OP_DUP, OP_HASH160, OP_PUSHDATA h, OP_EQUALVERIFY, OP_CHECKSIG] 
+        -> either def (PayPubKeyHash . lst) $ decodeOrFail' k
+    [OP_1, OP_PUSHDATA k, OP_1, OP_CHECKMULTISIG] 
+        -> either def (PayMulSig1 . lst) $ decodeOrFail' k
+    [t, OP_PUSHDATA k1, OP_PUSHDATA k2, OP_2, OP_CHECKMULTISIG]
+        -> either def id $ do
+               (_,_,r1) <- decodeOrFail' k1
+               (_,_,r2) <- decodeOrFail' k2
+               return $ case t of 
+                   OP_1 -> PayMulSig2 OneOfTwo r1 r2
+                   OP_2 -> PayMulSig2 TwoOfTwo r1 r2
+                    _    -> PayNonStd ops
+    [t, OP_PUSHDATA k1, OP_PUSHDATA k2, OP_2, OP_CHECKMULTISIG]
+        -> either def id $ do
+               (_,_,r1) <- decodeOrFail' k1
+               (_,_,r2) <- decodeOrFail' k2
+               (_,_,r3) <- decodeOrFail' k3
+               return $ case t of 
+                   OP_1 -> PayMulSig3 OneOfThree   r1 r2 r3
+                   OP_2 -> PayMulSig3 TwoOfThree   r1 r2 r3
+                   OP_3 -> PayMulSig3 ThreeOfThree r1 r2 r3
+                   _    -> PayNonStd ops
+    [OP_HASH160, OP_PUSHDATA h, OP_EQUAL]
+        -> either def (PayScriptHash . lst) $ decodeOrFail' k
+    _ -> PayNonStd ops
+    where def         = const $ PayNonStd ops
+          lst (a,b,c) = c
+    
+
+data ScriptInput = SpendPubKey 
+                     { runSpendPubKey     :: Signature }
+                 | SpendPubKeyHash 
+                     { sigSpendPubKeyHash :: Signature
+                     , keySpendPubKeyHash :: PubKey
+                     }
+                 | SpendMulSig1
+                     { runSpendMulSig1    :: Signature }
+                 | SpendMulSig2
+                     { fstSpendMulSig     :: Signature
+                     , sndSpendMulSig     :: Signature
+                     }
+                 | SpendMulSig3
+                     { fstSpendMulSig     :: Signature
+                     , sndSpendMulSig     :: Signature
+                     , trdSpendMulSig     :: Signature
+                     }
+                 | SpendScriptHash 
+                     { inSpendScriptHash  :: ScriptInput
+                     , outSpendScriptHash :: ScriptOutput
+                     }
+                 | SpendNonStd 
+                     { runSpendNonStd     :: [ScriptOp] }
+                 deriving (Eq, Show)
+
+instance Binary ScriptOutput where
+
+    get = do
+        (VarInt len) <- get
+        isolate (fromIntegral len) $ opsToScriptOutput <$> getScriptOps
+
+    put s = do
+        
 
 instance Binary Script where
 
