@@ -17,8 +17,11 @@ module Haskoin.Protocol
 , NotFound(..)
 , Ping(..)
 , Pong(..)
-, Script(..)
 , ScriptOp(..)
+, ScriptOutput(..)
+, ScriptInput(..)
+, MulSig2Type(..)
+, MulSig3Type(..)
 , Tx(..)
 , TxIn(..)
 , TxOut(..)
@@ -27,6 +30,7 @@ module Haskoin.Protocol
 , VarInt(..)
 , VarString(..)
 , Version(..)
+, scriptAddr
 ) where
 
 import Haskoin.Protocol.Message

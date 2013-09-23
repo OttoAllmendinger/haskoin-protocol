@@ -31,12 +31,12 @@ import Haskoin.Protocol.VarInt
 import Haskoin.Protocol.Script
 import Haskoin.Crypto (Hash256)
 
-data Tx = Tx {
-    txVersion  :: !Word32,
-    txIn       :: ![TxIn],
-    txOut      :: ![TxOut],
-    txLockTime :: !Word32
-} deriving (Eq, Show)
+data Tx = Tx 
+    { txVersion  :: !Word32
+    , txIn       :: ![TxIn]
+    , txOut      :: ![TxOut]
+    , txLockTime :: !Word32
+    } deriving (Eq, Show)
 
 instance Binary Tx where
 
@@ -54,12 +54,12 @@ instance Binary Tx where
         forM_ os put
         putWord32le l
 
-data CoinbaseTx = CoinbaseTx {
-    cbVersion  :: !Word32,
-    cbData     :: !BS.ByteString,
-    cbOut      :: ![TxOut],
-    cbLockTime :: !Word32
-} deriving (Eq, Show)
+data CoinbaseTx = CoinbaseTx 
+    { cbVersion  :: !Word32
+    , cbData     :: !BS.ByteString
+    , cbOut      :: ![TxOut]
+    , cbLockTime :: !Word32
+    } deriving (Eq, Show)
 
 instance Binary CoinbaseTx where
 
@@ -87,29 +87,29 @@ instance Binary CoinbaseTx where
         forM_ os put
         putWord32le l
 
-data TxIn = TxIn {
-    prevOutput   :: !OutPoint,
-    sigScript    :: !Script,
-    txInSequence :: !Word32
-} deriving (Eq, Show)
+data TxIn = TxIn 
+    { prevOutput   :: !OutPoint
+    , scriptInput  :: !ScriptInput
+    , txInSequence :: !Word32
+    } deriving (Eq, Show)
 
 instance Binary TxIn where
     get = TxIn <$> get <*> get <*> getWord32le
     put (TxIn o s seq) = put o >> put s >> putWord32le seq
 
-data TxOut = TxOut {
-    outValue     :: !Word64,
-    scriptPubKey :: !Script
-} deriving (Eq, Show)
+data TxOut = TxOut 
+    { outValue     :: !Word64
+    , scriptOutput :: !ScriptOutput
+    } deriving (Eq, Show)
 
 instance Binary TxOut where
     get = TxOut <$> getWord64le <*> get
     put (TxOut o s) = putWord64le o >> put s
 
-data OutPoint = OutPoint {
-    outPointHash  :: !Hash256,
-    outPointIndex :: !Word32
-} deriving (Eq, Show)
+data OutPoint = OutPoint 
+    { outPointHash  :: !Hash256
+    , outPointIndex :: !Word32
+    } deriving (Eq, Show)
 
 instance Binary OutPoint where
     get = OutPoint <$> get <*> getWord32le

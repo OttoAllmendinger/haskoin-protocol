@@ -1,6 +1,12 @@
 module Haskoin.Protocol.Script 
 ( ScriptOp(..)
-, Script(..)
+, ScriptInput(..)
+, ScriptOutput(..)
+, scriptAddr
+, MulSig2Type(..)
+, MulSig3Type(..)
+, opsToScriptOutput
+, scriptOutputToOps
 ) where
 
 import Control.Monad (liftM2)
@@ -30,8 +36,21 @@ import qualified Data.ByteString as BS
     )
 
 import Haskoin.Protocol.VarInt
-import Haskoin.Util (isolate, toStrictBS)
-import Haskoin.Crypto (PubKey)
+import Haskoin.Util 
+    ( isolate
+    , toStrictBS
+    , decodeEither
+    , encode'
+    )
+import Haskoin.Crypto 
+    ( PubKey
+    , pubKeyAddr
+    , Hash160
+    , hash160
+    , hash256BS
+    , Address(..)
+    , Signature
+    )
 
 data MulSig2Type = OneOfTwo
                  | TwoOfTwo
@@ -43,85 +62,86 @@ data MulSig3Type = OneOfThree
                  deriving (Eq, Show)
 
 data ScriptOutput = PayPubKey 
-                      { runPayPubKey     :: PubKey }
+                      { runPayPubKey     :: !PubKey }
                   | PayPubKeyHash 
-                      { runPayPubKeyHash :: Hash160 }
+                      { runPayPubKeyHash :: !Address }
                   | PayMulSig1 
-                      { runPayMulSig1    :: PubKey }
+                      { runPayMulSig1    :: !PubKey }
                   | PayMulSig2
-                      { mulSig2Type      :: MulSig2Type
-                      , fstMulSigKey     :: PubKey
-                      , sndMulSigKey     :: PubKey
+                      { mulSig2Type      :: !MulSig2Type
+                      , fstMulSigKey     :: !PubKey
+                      , sndMulSigKey     :: !PubKey
                       }
                   | PayMulSig3
-                      { mulSig3Type      :: MulSig3Type
-                      , fstMulSigKey     :: PubKey
-                      , sndMulSigKey     :: PubKey
-                      , trdMulSigKey     :: PubKey
+                      { mulSig3Type      :: !MulSig3Type
+                      , fstMulSigKey     :: !PubKey
+                      , sndMulSigKey     :: !PubKey
+                      , trdMulSigKey     :: !PubKey
                       }
                   | PayScriptHash 
-                      { runPayScriptHash :: Hash160 }
+                      { runPayScriptHash :: !Address }
                   | PayNonStd 
-                      { runPayNonStd     :: [ScriptOp] }
+                      { runPayNonStd     :: ![ScriptOp] }
                   deriving (Eq, Show)
 
 opsToScriptOutput :: [ScriptOp] -> ScriptOutput
 opsToScriptOutput ops = case ops of
     [OP_PUSHDATA k, OP_CHECKSIG] 
-        -> either def (PayPubKey . lst) $ decodeOrFail' k
-    [OP_DUP, OP_HASH160, OP_PUSHDATA h, OP_EQUALVERIFY, OP_CHECKSIG] 
-        -> either def (PayPubKeyHash . lst) $ decodeOrFail' k
+        -> decodeEither k def PayPubKey
+    [OP_DUP, OP_HASH160, OP_PUSHDATA h, OP_EQUALVERIFY, OP_CHECKSIG]
+        -> decodeEither h def (PayPubKeyHash . PubKeyAddress)
     [OP_1, OP_PUSHDATA k, OP_1, OP_CHECKMULTISIG] 
-        -> either def (PayMulSig1 . lst) $ decodeOrFail' k
+        -> decodeEither k def PayMulSig1
     [t, OP_PUSHDATA k1, OP_PUSHDATA k2, OP_2, OP_CHECKMULTISIG]
-        -> either def id $ do
-               (_,_,r1) <- decodeOrFail' k1
-               (_,_,r2) <- decodeOrFail' k2
-               return $ case t of 
-                   OP_1 -> PayMulSig2 OneOfTwo r1 r2
-                   OP_2 -> PayMulSig2 TwoOfTwo r1 r2
-                    _    -> PayNonStd ops
-    [t, OP_PUSHDATA k1, OP_PUSHDATA k2, OP_2, OP_CHECKMULTISIG]
-        -> either def id $ do
-               (_,_,r1) <- decodeOrFail' k1
-               (_,_,r2) <- decodeOrFail' k2
-               (_,_,r3) <- decodeOrFail' k3
-               return $ case t of 
-                   OP_1 -> PayMulSig3 OneOfThree   r1 r2 r3
-                   OP_2 -> PayMulSig3 TwoOfThree   r1 r2 r3
-                   OP_3 -> PayMulSig3 ThreeOfThree r1 r2 r3
-                   _    -> PayNonStd ops
+        -> decodeEither k1 def $ \r1 -> decodeEither k2 def $ \r2 ->
+            case t of OP_1 -> PayMulSig2 OneOfTwo r1 r2
+                      OP_2 -> PayMulSig2 TwoOfTwo r1 r2
+                      _    -> def
+    [t, OP_PUSHDATA k1, OP_PUSHDATA k2, OP_PUSHDATA k3, OP_3, OP_CHECKMULTISIG]
+        -> decodeEither k1 def $ \r1 -> 
+           decodeEither k2 def $ \r2 -> 
+           decodeEither k3 def $ \r3 -> 
+               case t of OP_1 -> PayMulSig3 OneOfThree   r1 r2 r3
+                         OP_2 -> PayMulSig3 TwoOfThree   r1 r2 r3
+                         OP_3 -> PayMulSig3 ThreeOfThree r1 r2 r3
+                         _    -> def
     [OP_HASH160, OP_PUSHDATA h, OP_EQUAL]
-        -> either def (PayScriptHash . lst) $ decodeOrFail' k
-    _ -> PayNonStd ops
-    where def         = const $ PayNonStd ops
-          lst (a,b,c) = c
+        -> decodeEither h def (PayScriptHash . ScriptAddress)
+    _ -> def
+    where def = PayNonStd ops
     
-
-data ScriptInput = SpendPubKey 
-                     { runSpendPubKey     :: Signature }
-                 | SpendPubKeyHash 
-                     { sigSpendPubKeyHash :: Signature
-                     , keySpendPubKeyHash :: PubKey
-                     }
-                 | SpendMulSig1
-                     { runSpendMulSig1    :: Signature }
-                 | SpendMulSig2
-                     { fstSpendMulSig     :: Signature
-                     , sndSpendMulSig     :: Signature
-                     }
-                 | SpendMulSig3
-                     { fstSpendMulSig     :: Signature
-                     , sndSpendMulSig     :: Signature
-                     , trdSpendMulSig     :: Signature
-                     }
-                 | SpendScriptHash 
-                     { inSpendScriptHash  :: ScriptInput
-                     , outSpendScriptHash :: ScriptOutput
-                     }
-                 | SpendNonStd 
-                     { runSpendNonStd     :: [ScriptOp] }
-                 deriving (Eq, Show)
+scriptOutputToOps :: ScriptOutput -> [ScriptOp]
+scriptOutputToOps s = case s of
+    (PayPubKey k) -> 
+        [OP_PUSHDATA $ encode' k, OP_CHECKSIG]
+    (PayPubKeyHash a) ->
+        [ OP_DUP, OP_HASH160
+        , OP_PUSHDATA $ encode' $ runAddress a
+        , OP_EQUALVERIFY, OP_CHECKSIG
+        ] 
+    (PayMulSig1 k) ->
+        [OP_1, OP_PUSHDATA $ encode' k, OP_1, OP_CHECKMULTISIG] 
+    (PayMulSig2 t k1 k2) ->
+        [ case t of
+            OneOfTwo -> OP_1
+            TwoOfTwo -> OP_2
+        , OP_PUSHDATA $ encode' k1
+        , OP_PUSHDATA $ encode' k2
+        , OP_2, OP_CHECKMULTISIG
+        ]
+    (PayMulSig3 t k1 k2 k3) ->
+        [ case t of
+            OneOfThree   -> OP_1
+            TwoOfThree   -> OP_2
+            ThreeOfThree -> OP_3
+        , OP_PUSHDATA $ encode' k1
+        , OP_PUSHDATA $ encode' k2
+        , OP_PUSHDATA $ encode' k3
+        , OP_3, OP_CHECKMULTISIG
+        ]
+    (PayScriptHash a) ->
+        [OP_HASH160, OP_PUSHDATA $ encode' $ runAddress a, OP_EQUAL]
+    (PayNonStd ops) -> ops
 
 instance Binary ScriptOutput where
 
@@ -129,19 +149,28 @@ instance Binary ScriptOutput where
         (VarInt len) <- get
         isolate (fromIntegral len) $ opsToScriptOutput <$> getScriptOps
 
-    put s = do
-        
+    put so = do
+        let bs = toStrictBS $ runPut $ putScriptOps $ scriptOutputToOps so
+        put $ VarInt $ fromIntegral $ BS.length bs
+        putByteString bs
 
-instance Binary Script where
+data ScriptInput = ScriptInput { runScriptInput :: [ScriptOp] }
+    deriving (Eq, Show)
+
+scriptAddr :: ScriptOutput -> Address
+scriptAddr = ScriptAddress . hash160 . hash256BS . encode'
+
+instance Binary ScriptInput where
 
     get = do
         (VarInt len) <- get
-        isolate (fromIntegral len) (Script <$> getScriptOps)
+        ScriptInput <$> (isolate (fromIntegral len) getScriptOps)
 
-    put (Script xs) = do
-        let bs = toStrictBS $ runPut (putScriptOps xs)
+    put si = do
+        let bs = toStrictBS $ runPut $ putScriptOps $ runScriptInput si
         put $ VarInt $ fromIntegral $ BS.length bs
         putByteString bs
+    
 
 getScriptOps :: Get [ScriptOp]
 getScriptOps = do
@@ -160,10 +189,10 @@ data ScriptOp =
     OP_PUSHDATA BS.ByteString |
     OP_FALSE | 
     OP_1NEGATE | 
-    OP_TRUE |
-    OP_2  | OP_3  | OP_4  | OP_5  | OP_6  | 
-    OP_7  | OP_8  | OP_9  | OP_10 | OP_11 | 
-    OP_12 | OP_13 | OP_14 | OP_15 | OP_16 |
+    OP_1  | OP_2  | OP_3  | OP_4  | 
+    OP_5  | OP_6  | OP_7  | OP_8  | 
+    OP_9  | OP_10 | OP_11 | OP_12 | 
+    OP_13 | OP_14 | OP_15 | OP_16 |
 
     -- Flow control
     OP_VERIFY |
@@ -205,7 +234,7 @@ instance Binary ScriptOp where
                         payload <- getByteString (fromIntegral len)
                         return $ OP_PUSHDATA payload
                     | op == 0x4f = return $ OP_1NEGATE
-                    | op == 0x51 = return $ OP_TRUE
+                    | op == 0x51 = return $ OP_1
                     | op == 0x52 = return $ OP_2
                     | op == 0x53 = return $ OP_3
                     | op == 0x54 = return $ OP_4
@@ -256,7 +285,7 @@ instance Binary ScriptOp where
 
         OP_FALSE             -> putWord8 0x00
         OP_1NEGATE           -> putWord8 0x4f
-        OP_TRUE              -> putWord8 0x51
+        OP_1                 -> putWord8 0x51
         OP_2                 -> putWord8 0x52
         OP_3                 -> putWord8 0x53
         OP_4                 -> putWord8 0x54

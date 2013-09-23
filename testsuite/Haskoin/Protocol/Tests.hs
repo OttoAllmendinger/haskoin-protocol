@@ -10,6 +10,7 @@ import Data.Binary.Put
 
 import QuickCheckUtils
 import Haskoin.Protocol
+import Haskoin.Protocol.Script
 
 tests :: [Test]
 tests = 
@@ -27,7 +28,8 @@ tests =
         , testProperty "TxOut" (metaGetPut :: TxOut -> Bool)
         , testProperty "OutPoint" (metaGetPut :: OutPoint -> Bool)
         , testProperty "ScriptOp" (metaGetPut :: ScriptOp -> Bool)
-        , testProperty "Script" (metaGetPut :: Script -> Bool)
+        , testProperty "ScriptOutput" (metaGetPut :: ScriptOutput -> Bool)
+        , testProperty "ScriptInput" (metaGetPut :: ScriptInput -> Bool)
         , testProperty "Tx" (metaGetPut :: Tx -> Bool)
         , testProperty "CoinbaseTx" (metaGetPut :: CoinbaseTx -> Bool)
         , testProperty "BlockHeader" (metaGetPut :: BlockHeader -> Bool)
@@ -43,8 +45,15 @@ tests =
         , testProperty "MessageHeader" (metaGetPut :: MessageHeader -> Bool)
         , testProperty "Message" (metaGetPut :: Message -> Bool)
         ]
+    , testGroup "Scripts"
+        [ testProperty "ScriptOutput from/to [ScriptOp]" scriptOutputOps
+        ]
+        
     ]
 
 metaGetPut :: (Binary a, Eq a) => a -> Bool
 metaGetPut x = (runGet get (runPut $ put x)) == x
+
+scriptOutputOps :: ScriptOutput -> Bool
+scriptOutputOps so = (opsToScriptOutput $ scriptOutputToOps so) == so
 

@@ -18,7 +18,12 @@ import Haskoin.Crypto
     , derivePubKey
     , makePrvKey
     , chksum32
+    , PubKey
+    , pubKeyAddr
     )
+
+curveN :: Integer
+curveN = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141 
 
 instance Arbitrary VarInt where
     arbitrary = VarInt <$> arbitrary
@@ -111,7 +116,7 @@ instance Arbitrary ScriptOp where
     arbitrary = oneof [ OP_PUSHDATA <$> nonEmptyByteString
                       , return OP_FALSE
                       , return OP_1NEGATE
-                      , return OP_TRUE
+                      , return OP_1
                       , return OP_2, return OP_3, return OP_4, return OP_5
                       , return OP_6, return OP_7, return OP_8, return OP_9
                       , return OP_10, return OP_11, return OP_12, return OP_13
@@ -130,10 +135,35 @@ instance Arbitrary ScriptOp where
                       , return $ OP_INVALIDOPCODE 0xff
                       ]
 
-instance Arbitrary Script where
+instance Arbitrary PubKey where
     arbitrary = do
-        i <- choose (1,10)
-        Script <$> vectorOf i arbitrary
+        n <- choose (1, curveN-1)
+        return $ derivePubKey $ fromJust $ makePrvKey n
+
+instance Arbitrary MulSig2Type where
+    arbitrary = elements [ OneOfTwo, TwoOfTwo ] 
+
+instance Arbitrary MulSig3Type where
+    arbitrary = elements [ OneOfThree, TwoOfThree, ThreeOfThree ] 
+
+instance Arbitrary ScriptOutput where
+    arbitrary = oneof 
+        [ PayPubKey <$> arbitrary
+        , (PayPubKeyHash . pubKeyAddr) <$> arbitrary 
+        , PayMulSig1 <$> arbitrary
+        , PayMulSig2 <$> arbitrary <*> arbitrary <*> arbitrary
+        , PayMulSig3 <$> arbitrary <*> arbitrary 
+                     <*> arbitrary <*> arbitrary
+        , (PayScriptHash . scriptAddr) <$> arbitrary
+        , PayNonStd <$> do
+            i <- choose (1,20)
+            vectorOf i arbitrary
+        ]
+
+instance Arbitrary ScriptInput where
+    arbitrary = do
+        i <- choose (1,5)
+        ScriptInput <$> (vectorOf i arbitrary)
 
 instance Arbitrary GetBlocks where
     arbitrary = GetBlocks <$> arbitrary
