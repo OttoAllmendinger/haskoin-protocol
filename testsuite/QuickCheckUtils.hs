@@ -12,15 +12,8 @@ import Data.Binary.Put
 import qualified Data.ByteString as BS
 
 import Haskoin.Protocol
-import Haskoin.Util (toStrictBS)
+import Haskoin.Util 
 import Haskoin.Crypto 
-    ( hash256
-    , derivePubKey
-    , makePrvKey
-    , chksum32
-    , PubKey
-    , pubKeyAddr
-    )
 
 curveN :: Integer
 curveN = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141 
@@ -135,10 +128,36 @@ instance Arbitrary ScriptOp where
                       , return $ OP_INVALIDOPCODE 0xff
                       ]
 
-instance Arbitrary PubKey where
+newtype TestPrvKeyC = TestPrvKeyC { runTestPrvKeyC :: PrvKey }
+    deriving (Eq, Show)
+
+newtype TestPrvKeyU = TestPrvKeyU { runTestPrvKeyU :: PrvKey }
+    deriving (Eq, Show)
+
+instance Arbitrary TestPrvKeyC where
     arbitrary = do
-        n <- choose (1, curveN-1)
-        return $ derivePubKey $ fromJust $ makePrvKey n
+        i <- fromInteger <$> choose (1, curveN-1)
+        return $ TestPrvKeyC $ fromJust $ makePrvKey i
+
+instance Arbitrary TestPrvKeyU where
+    arbitrary = do
+        i <- fromInteger <$> choose (1, curveN-1)
+        return $ TestPrvKeyU $ fromJust $ makePrvKeyU i
+
+instance Arbitrary PrvKey where
+    arbitrary = oneof
+        [ runTestPrvKeyC <$> (arbitrary :: Gen TestPrvKeyC)
+        , runTestPrvKeyU <$> (arbitrary :: Gen TestPrvKeyU)
+        ]
+
+instance Arbitrary PubKey where
+    arbitrary = derivePubKey <$> arbitrary
+
+instance Arbitrary Signature where
+    arbitrary = do
+        msg <- arbitrary
+        prv <- arbitrary
+        return $ detSignMsg (fromInteger msg) prv
 
 instance Arbitrary MulSig2Type where
     arbitrary = elements [ OneOfTwo, TwoOfTwo ] 

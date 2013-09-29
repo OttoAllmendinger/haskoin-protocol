@@ -31,6 +31,17 @@ module Haskoin.Protocol
 , VarString(..)
 , Version(..)
 , scriptAddr
+, toScriptInput
+, spendPubKey
+, spendPubKeyHash
+, spendSig2
+, spendSig3
+, spendScriptHash
+, parseInputPubKey
+, parseInputPubKeyHash
+, parseInputSig2
+, parseInputSig3
+, parseInputScriptHash
 ) where
 
 import Haskoin.Protocol.Message
