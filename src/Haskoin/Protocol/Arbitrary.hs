@@ -1,22 +1,15 @@
-module QuickCheckUtils where
+module Haskoin.Protocol.Arbitrary () where
 
 import Test.QuickCheck
+import Haskoin.Util.Arbitrary (nonEmptyBS)
+import Haskoin.Crypto.Arbitrary
 
 import Control.Monad
 import Control.Applicative 
 
-import Data.Binary
-import Data.Maybe
-import Data.Binary.Get
-import Data.Binary.Put
-import qualified Data.ByteString as BS
-
 import Haskoin.Protocol
+import Haskoin.Crypto
 import Haskoin.Util 
-import Haskoin.Crypto 
-
-curveN :: Integer
-curveN = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141 
 
 instance Arbitrary VarInt where
     arbitrary = VarInt <$> arbitrary
@@ -111,7 +104,7 @@ instance Arbitrary Block where
         return $ Block h c t
 
 instance Arbitrary ScriptOp where
-    arbitrary = oneof [ OP_PUSHDATA <$> nonEmptyByteString
+    arbitrary = oneof [ OP_PUSHDATA <$> nonEmptyBS
                       , return OP_FALSE
                       , return OP_1NEGATE
                       , return OP_1
@@ -126,10 +119,7 @@ instance Arbitrary ScriptOp where
                       , return OP_HASH160
                       , return OP_CHECKSIG
                       , return OP_CHECKMULTISIG
-                      , OP_PUBKEY <$> do
-                            i <- choose (1, 2^256-1)
-                            let pk = fromJust $ makePrvKey i
-                            return $ derivePubKey pk
+                      , OP_PUBKEY <$> arbitrary
                       , return $ OP_INVALIDOPCODE 0xff
                       ]
 
@@ -199,16 +189,4 @@ instance Arbitrary Message where
                       , MPong <$> arbitrary
                       , MAlert <$> arbitrary
                       ]
-
--- from Data.ByteString project
-instance Arbitrary BS.ByteString where
-    arbitrary = do
-        bs <- BS.pack `fmap` arbitrary
-        n <- choose (0, 2)
-        return (BS.drop n bs) -- to give us some with non-0 offset
-
-nonEmptyByteString :: Gen BS.ByteString
-nonEmptyByteString = do
-    bs <- arbitrary
-    return $ if BS.null bs then BS.pack [0] else bs
 

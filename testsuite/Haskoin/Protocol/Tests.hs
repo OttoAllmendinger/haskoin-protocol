@@ -9,7 +9,7 @@ import Data.Binary
 import Data.Binary.Get
 import Data.Binary.Put
 
-import QuickCheckUtils
+import Haskoin.Protocol.Arbitrary
 import Haskoin.Protocol
 import Haskoin.Protocol.Script
 import Haskoin.Crypto
