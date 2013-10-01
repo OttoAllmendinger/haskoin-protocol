@@ -1,23 +1,6 @@
 module Haskoin.Protocol.Script 
 ( ScriptOp(..)
-, ScriptInput(..)
-, ScriptOutput(..)
-, scriptAddr
-, MulSig2Type(..)
-, MulSig3Type(..)
-, scriptOpsToOutput
-, outputToScriptOps
-, spendPK
-, spendPKHash
-, spendSig2
-, spendSig3
-, spendSHash
-, parsePK
-, parsePKHash
-, parseSig2
-, parseSig3
-, parseSHash
-, toScriptInput
+, Script(..)
 ) where
 
 import Control.Monad (liftM2)
@@ -31,6 +14,7 @@ import Data.Binary.Get
     , getWord8
     , getWord16le
     , getWord32le
+    , getWord32be
     , getByteString
     )
 import Data.Binary.Put 
@@ -39,6 +23,7 @@ import Data.Binary.Put
     , putWord8
     , putWord16le
     , putWord32le
+    , putWord32be
     , putByteString
     )
 import qualified Data.ByteString as BS
@@ -63,186 +48,18 @@ import Haskoin.Crypto
     , Signature
     )
 
-data MulSig2Type = OneOfTwo
-                 | TwoOfTwo
-                 deriving (Eq, Show)
-
-data MulSig3Type = OneOfThree
-                 | TwoOfThree
-                 | ThreeOfThree
-                 deriving (Eq, Show)
-
-data ScriptOutput = PayPubKey 
-                      { runPayPubKey     :: !PubKey }
-                  | PayPubKeyHash 
-                      { runPayPubKeyHash :: !Address }
-                  | PayMulSig1 
-                      { runPayMulSig1    :: !PubKey }
-                  | PayMulSig2
-                      { mulSig2Type      :: !MulSig2Type
-                      , fstMulSigKey     :: !PubKey
-                      , sndMulSigKey     :: !PubKey
-                      }
-                  | PayMulSig3
-                      { mulSig3Type      :: !MulSig3Type
-                      , fstMulSigKey     :: !PubKey
-                      , sndMulSigKey     :: !PubKey
-                      , trdMulSigKey     :: !PubKey
-                      }
-                  | PayScriptHash 
-                      { runPayScriptHash :: !Address }
-                  | PayNonStd 
-                      { runPayNonStd     :: ![ScriptOp] }
-                  deriving (Eq, Show)
-
-scriptAddr :: ScriptOutput -> Address
-scriptAddr = ScriptAddress . hash160 . hash256BS . encode'
-
-scriptOpsToOutput :: [ScriptOp] -> ScriptOutput
-scriptOpsToOutput ops = case ops of
-    [OP_PUSHDATA k, OP_CHECKSIG] 
-        -> decodeEither k def PayPubKey
-    [OP_DUP, OP_HASH160, OP_PUSHDATA h, OP_EQUALVERIFY, OP_CHECKSIG]
-        -> decodeEither h def (PayPubKeyHash . PubKeyAddress)
-    [OP_1, OP_PUSHDATA k, OP_1, OP_CHECKMULTISIG] 
-        -> decodeEither k def PayMulSig1
-    [t, OP_PUSHDATA k1, OP_PUSHDATA k2, OP_2, OP_CHECKMULTISIG]
-        -> decodeEither k1 def $ \r1 -> decodeEither k2 def $ \r2 ->
-            case t of OP_1 -> PayMulSig2 OneOfTwo r1 r2
-                      OP_2 -> PayMulSig2 TwoOfTwo r1 r2
-                      _    -> def
-    [t, OP_PUSHDATA k1, OP_PUSHDATA k2, OP_PUSHDATA k3, OP_3, OP_CHECKMULTISIG]
-        -> decodeEither k1 def $ \r1 -> 
-           decodeEither k2 def $ \r2 -> 
-           decodeEither k3 def $ \r3 -> 
-               case t of OP_1 -> PayMulSig3 OneOfThree   r1 r2 r3
-                         OP_2 -> PayMulSig3 TwoOfThree   r1 r2 r3
-                         OP_3 -> PayMulSig3 ThreeOfThree r1 r2 r3
-                         _    -> def
-    [OP_HASH160, OP_PUSHDATA h, OP_EQUAL]
-        -> decodeEither h def (PayScriptHash . ScriptAddress)
-    _ -> def
-    where def = PayNonStd ops
-    
-outputToScriptOps :: ScriptOutput -> [ScriptOp]
-outputToScriptOps s = case s of
-    (PayPubKey k) -> 
-        [OP_PUSHDATA $ encode' k, OP_CHECKSIG]
-    (PayPubKeyHash a) ->
-        [ OP_DUP, OP_HASH160
-        , OP_PUSHDATA $ encode' $ runAddress a
-        , OP_EQUALVERIFY, OP_CHECKSIG
-        ] 
-    (PayMulSig1 k) ->
-        [OP_1, OP_PUSHDATA $ encode' k, OP_1, OP_CHECKMULTISIG] 
-    (PayMulSig2 t k1 k2) ->
-        [ case t of
-            OneOfTwo -> OP_1
-            TwoOfTwo -> OP_2
-        , OP_PUSHDATA $ encode' k1
-        , OP_PUSHDATA $ encode' k2
-        , OP_2, OP_CHECKMULTISIG
-        ]
-    (PayMulSig3 t k1 k2 k3) ->
-        [ case t of
-            OneOfThree   -> OP_1
-            TwoOfThree   -> OP_2
-            ThreeOfThree -> OP_3
-        , OP_PUSHDATA $ encode' k1
-        , OP_PUSHDATA $ encode' k2
-        , OP_PUSHDATA $ encode' k3
-        , OP_3, OP_CHECKMULTISIG
-        ]
-    (PayScriptHash a) ->
-        [OP_HASH160, OP_PUSHDATA $ encode' $ runAddress a, OP_EQUAL]
-    (PayNonStd ops) -> ops
-
-instance Binary ScriptOutput where
-
-    get = do
-        (VarInt len) <- get
-        isolate (fromIntegral len) $ scriptOpsToOutput <$> getScriptOps
-
-    put so = do
-        let bs = toStrictBS $ runPut $ putScriptOps $ outputToScriptOps so
-        put $ VarInt $ fromIntegral $ BS.length bs
-        putByteString bs
-
-data ScriptInput = ScriptInput { runScriptInput :: [ScriptOp] }
+data Script = Script { runScript :: [ScriptOp] }
     deriving (Eq, Show)
 
-instance Binary ScriptInput where
-
+instance Binary Script where
     get = do
         (VarInt len) <- get
-        isolate (fromIntegral len) $ ScriptInput <$> getScriptOps
+        isolate (fromIntegral len) $ Script <$> getScriptOps
 
-    put (ScriptInput ops) = do
+    put (Script ops) = do
         let bs = toStrictBS $ runPut $ putScriptOps ops
         put $ VarInt $ fromIntegral $ BS.length bs
         putByteString bs
-
-toScriptInput :: ScriptOutput -> ScriptInput
-toScriptInput = ScriptInput . outputToScriptOps
-
-spendPK :: Signature -> ScriptInput
-spendPK sig = ScriptInput [ OP_PUSHDATA $ encode' sig ]
-
-spendPKHash :: Signature -> PubKey -> ScriptInput
-spendPKHash sig pub = 
-    ScriptInput [ OP_PUSHDATA $ encode' sig
-                , OP_PUSHDATA $ encode' pub
-                ]
-
-spendSig2 :: Signature -> Signature -> ScriptInput
-spendSig2 sig1 sig2 =
-    ScriptInput [ OP_PUSHDATA $ encode' sig1
-                , OP_PUSHDATA $ encode' sig2
-                ]
-
-spendSig3 :: Signature -> Signature -> Signature -> ScriptInput
-spendSig3 sig1 sig2 sig3 =
-    ScriptInput [ OP_PUSHDATA $ encode' sig1
-                , OP_PUSHDATA $ encode' sig2
-                , OP_PUSHDATA $ encode' sig3
-                ]
-
-spendSHash :: ScriptInput -> ScriptOutput -> ScriptInput
-spendSHash (ScriptInput ops) so =
-    ScriptInput $ ops ++ [OP_PUSHDATA $ encode' so]
-
-parsePK :: ScriptInput -> Maybe Signature
-parsePK (ScriptInput ops) = case ops of
-    [OP_PUSHDATA s] -> decodeEither s Nothing Just
-    _       -> Nothing
-
-parsePKHash :: ScriptInput -> Maybe (Signature, PubKey)
-parsePKHash (ScriptInput ops) = case ops of
-    [OP_PUSHDATA s, OP_PUSHDATA p] ->
-        (,) <$> (decodeEither s Nothing Just) 
-            <*> (decodeEither p Nothing Just)
-    _ -> Nothing
-
-parseSig2 :: ScriptInput -> Maybe (Signature, Signature)
-parseSig2 (ScriptInput ops) = case ops of
-    [OP_PUSHDATA s1, OP_PUSHDATA s2] ->
-        (,) <$> (decodeEither s1 Nothing Just) 
-            <*> (decodeEither s2 Nothing Just)
-    _ -> Nothing
-
-parseSig3 :: ScriptInput -> Maybe (Signature, Signature, Signature)
-parseSig3 (ScriptInput ops) = case ops of
-    [OP_PUSHDATA s1, OP_PUSHDATA s2, OP_PUSHDATA s3] ->
-        (,,) <$> (decodeEither s1 Nothing Just) 
-             <*> (decodeEither s2 Nothing Just)
-             <*> (decodeEither s3 Nothing Just)
-    _ -> Nothing
-
-parseSHash :: ScriptInput -> Maybe (ScriptInput, ScriptOutput)
-parseSHash (ScriptInput ops) = case last ops of
-    OP_PUSHDATA bs -> 
-        ((,) $ ScriptInput $ init ops) <$> decodeEither bs Nothing Just
-    _ -> Nothing
 
 getScriptOps :: Get [ScriptOp]
 getScriptOps = do

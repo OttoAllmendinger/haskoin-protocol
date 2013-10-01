@@ -18,10 +18,7 @@ module Haskoin.Protocol
 , Ping(..)
 , Pong(..)
 , ScriptOp(..)
-, ScriptOutput(..)
-, ScriptInput(..)
-, MulSig2Type(..)
-, MulSig3Type(..)
+, Script(..)
 , Tx(..)
 , TxIn(..)
 , TxOut(..)
@@ -30,18 +27,6 @@ module Haskoin.Protocol
 , VarInt(..)
 , VarString(..)
 , Version(..)
-, scriptAddr
-, toScriptInput
-, spendPK
-, spendPKHash
-, spendSig2
-, spendSig3
-, spendSHash
-, parsePK
-, parsePKHash
-, parseSig2
-, parseSig3
-, parseSHash
 ) where
 
 import Haskoin.Protocol.Message

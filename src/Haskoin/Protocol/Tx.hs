@@ -89,7 +89,7 @@ instance Binary CoinbaseTx where
 
 data TxIn = TxIn 
     { prevOutput   :: !OutPoint
-    , scriptInput  :: !ScriptInput
+    , scriptInput  :: !Script
     , txInSequence :: !Word32
     } deriving (Eq, Show)
 
@@ -99,7 +99,7 @@ instance Binary TxIn where
 
 data TxOut = TxOut 
     { outValue     :: !Word64
-    , scriptOutput :: !ScriptOutput
+    , scriptOutput :: !Script
     } deriving (Eq, Show)
 
 instance Binary TxOut where

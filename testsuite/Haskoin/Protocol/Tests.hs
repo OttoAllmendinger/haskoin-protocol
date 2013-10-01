@@ -30,8 +30,7 @@ tests =
         , testProperty "TxOut" (metaGetPut :: TxOut -> Bool)
         , testProperty "OutPoint" (metaGetPut :: OutPoint -> Bool)
         , testProperty "ScriptOp" (metaGetPut :: ScriptOp -> Bool)
-        , testProperty "ScriptOutput" (metaGetPut :: ScriptOutput -> Bool)
-        , testProperty "ScriptInput" (metaGetPut :: ScriptInput -> Bool)
+        , testProperty "Script" (metaGetPut :: Script -> Bool)
         , testProperty "Tx" (metaGetPut :: Tx -> Bool)
         , testProperty "CoinbaseTx" (metaGetPut :: CoinbaseTx -> Bool)
         , testProperty "BlockHeader" (metaGetPut :: BlockHeader -> Bool)
@@ -47,39 +46,8 @@ tests =
         , testProperty "MessageHeader" (metaGetPut :: MessageHeader -> Bool)
         , testProperty "Message" (metaGetPut :: Message -> Bool)
         ]
-    , testGroup "Scripts"
-        [ testProperty "ScriptOutput from/to [ScriptOp]" scriptOutputOps
-        , testProperty "parse PubKey Script" testParsePK
-        , testProperty "parse PubKeyHash Script" testParsePKHash
-        , testProperty "parse Sig2 Script" testParseSig2
-        , testProperty "parse Sig3 Script" testParseSig3
-        , testProperty "parse ScriptHash Script" testParseSHash
-        ]
-        
     ]
 
 metaGetPut :: (Binary a, Eq a) => a -> Bool
 metaGetPut x = (runGet get (runPut $ put x)) == x
-
-scriptOutputOps :: ScriptOutput -> Bool
-scriptOutputOps so = (scriptOpsToOutput $ outputToScriptOps so) == so
-
-testParsePK :: Signature -> Bool
-testParsePK s = (fromJust $ parsePK $ spendPK s) == s
-
-testParsePKHash :: Signature -> PubKey -> Bool
-testParsePKHash s p = 
-    (fromJust $ parsePKHash $ spendPKHash s p) == (s,p)
-
-testParseSig2 :: Signature -> Signature -> Bool
-testParseSig2 s1 s2 = 
-    (fromJust $ parseSig2 $ spendSig2 s1 s2) == (s1,s2)
-
-testParseSig3 :: Signature -> Signature -> Signature -> Bool
-testParseSig3 s1 s2 s3 = 
-    (fromJust $ parseSig3 $ spendSig3 s1 s2 s3) == (s1,s2,s3)
-
-testParseSHash :: ScriptInput -> ScriptOutput -> Bool
-testParseSHash si so = 
-    (fromJust $ parseSHash $ spendSHash si so) == (si,so)
 

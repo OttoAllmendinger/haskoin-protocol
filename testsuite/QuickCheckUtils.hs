@@ -65,6 +65,11 @@ instance Arbitrary BlockHeader where
                             <*> arbitrary
                             <*> arbitrary
                             
+instance Arbitrary Script where
+    arbitrary = do
+        i <- choose (1,10)
+        Script <$> (vectorOf i arbitrary)
+
 instance Arbitrary Tx where
     arbitrary = do
         v   <- arbitrary
@@ -127,62 +132,6 @@ instance Arbitrary ScriptOp where
                             return $ derivePubKey pk
                       , return $ OP_INVALIDOPCODE 0xff
                       ]
-
-newtype TestPrvKeyC = TestPrvKeyC { runTestPrvKeyC :: PrvKey }
-    deriving (Eq, Show)
-
-newtype TestPrvKeyU = TestPrvKeyU { runTestPrvKeyU :: PrvKey }
-    deriving (Eq, Show)
-
-instance Arbitrary TestPrvKeyC where
-    arbitrary = do
-        i <- fromInteger <$> choose (1, curveN-1)
-        return $ TestPrvKeyC $ fromJust $ makePrvKey i
-
-instance Arbitrary TestPrvKeyU where
-    arbitrary = do
-        i <- fromInteger <$> choose (1, curveN-1)
-        return $ TestPrvKeyU $ fromJust $ makePrvKeyU i
-
-instance Arbitrary PrvKey where
-    arbitrary = oneof
-        [ runTestPrvKeyC <$> (arbitrary :: Gen TestPrvKeyC)
-        , runTestPrvKeyU <$> (arbitrary :: Gen TestPrvKeyU)
-        ]
-
-instance Arbitrary PubKey where
-    arbitrary = derivePubKey <$> arbitrary
-
-instance Arbitrary Signature where
-    arbitrary = do
-        msg <- arbitrary
-        prv <- arbitrary
-        return $ detSignMsg (fromInteger msg) prv
-
-instance Arbitrary MulSig2Type where
-    arbitrary = elements [ OneOfTwo, TwoOfTwo ] 
-
-instance Arbitrary MulSig3Type where
-    arbitrary = elements [ OneOfThree, TwoOfThree, ThreeOfThree ] 
-
-instance Arbitrary ScriptOutput where
-    arbitrary = oneof 
-        [ PayPubKey <$> arbitrary
-        , (PayPubKeyHash . pubKeyAddr) <$> arbitrary 
-        , PayMulSig1 <$> arbitrary
-        , PayMulSig2 <$> arbitrary <*> arbitrary <*> arbitrary
-        , PayMulSig3 <$> arbitrary <*> arbitrary 
-                     <*> arbitrary <*> arbitrary
-        , (PayScriptHash . scriptAddr) <$> arbitrary
-        , PayNonStd <$> do
-            i <- choose (1,20)
-            vectorOf i arbitrary
-        ]
-
-instance Arbitrary ScriptInput where
-    arbitrary = do
-        i <- choose (1,5)
-        ScriptInput <$> (vectorOf i arbitrary)
 
 instance Arbitrary GetBlocks where
     arbitrary = GetBlocks <$> arbitrary
