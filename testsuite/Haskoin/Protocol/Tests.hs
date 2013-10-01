@@ -49,11 +49,11 @@ tests =
         ]
     , testGroup "Scripts"
         [ testProperty "ScriptOutput from/to [ScriptOp]" scriptOutputOps
-        , testProperty "parse PubKey Script" testParseInputPubKey
-        , testProperty "parse PubKeyHash Script" testParseInputPubKeyHash
-        , testProperty "parse Sig2 Script" testParseInputSig2
-        , testProperty "parse Sig3 Script" testParseInputSig3
-        , testProperty "parse ScriptHash Script" testParseInputScriptHash
+        , testProperty "parse PubKey Script" testParsePK
+        , testProperty "parse PubKeyHash Script" testParsePKHash
+        , testProperty "parse Sig2 Script" testParseSig2
+        , testProperty "parse Sig3 Script" testParseSig3
+        , testProperty "parse ScriptHash Script" testParseSHash
         ]
         
     ]
@@ -64,22 +64,22 @@ metaGetPut x = (runGet get (runPut $ put x)) == x
 scriptOutputOps :: ScriptOutput -> Bool
 scriptOutputOps so = (scriptOpsToOutput $ outputToScriptOps so) == so
 
-testParseInputPubKey :: Signature -> Bool
-testParseInputPubKey s = (fromJust $ parseInputPubKey $ spendPubKey s) == s
+testParsePK :: Signature -> Bool
+testParsePK s = (fromJust $ parsePK $ spendPK s) == s
 
-testParseInputPubKeyHash :: Signature -> PubKey -> Bool
-testParseInputPubKeyHash s p = 
-    (fromJust $ parseInputPubKeyHash $ spendPubKeyHash s p) == (s,p)
+testParsePKHash :: Signature -> PubKey -> Bool
+testParsePKHash s p = 
+    (fromJust $ parsePKHash $ spendPKHash s p) == (s,p)
 
-testParseInputSig2 :: Signature -> Signature -> Bool
-testParseInputSig2 s1 s2 = 
-    (fromJust $ parseInputSig2 $ spendSig2 s1 s2) == (s1,s2)
+testParseSig2 :: Signature -> Signature -> Bool
+testParseSig2 s1 s2 = 
+    (fromJust $ parseSig2 $ spendSig2 s1 s2) == (s1,s2)
 
-testParseInputSig3 :: Signature -> Signature -> Signature -> Bool
-testParseInputSig3 s1 s2 s3 = 
-    (fromJust $ parseInputSig3 $ spendSig3 s1 s2 s3) == (s1,s2,s3)
+testParseSig3 :: Signature -> Signature -> Signature -> Bool
+testParseSig3 s1 s2 s3 = 
+    (fromJust $ parseSig3 $ spendSig3 s1 s2 s3) == (s1,s2,s3)
 
-testParseInputScriptHash :: ScriptInput -> ScriptOutput -> Bool
-testParseInputScriptHash si so = 
-    (fromJust $ parseInputScriptHash $ spendScriptHash si so) == (si,so)
+testParseSHash :: ScriptInput -> ScriptOutput -> Bool
+testParseSHash si so = 
+    (fromJust $ parseSHash $ spendSHash si so) == (si,so)
 

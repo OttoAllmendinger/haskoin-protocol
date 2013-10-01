@@ -7,16 +7,16 @@ module Haskoin.Protocol.Script
 , MulSig3Type(..)
 , scriptOpsToOutput
 , outputToScriptOps
-, spendPubKey
-, spendPubKeyHash
+, spendPK
+, spendPKHash
 , spendSig2
 , spendSig3
-, spendScriptHash
-, parseInputPubKey
-, parseInputPubKeyHash
-, parseInputSig2
-, parseInputSig3
-, parseInputScriptHash
+, spendSHash
+, parsePK
+, parsePKHash
+, parseSig2
+, parseSig3
+, parseSHash
 , toScriptInput
 ) where
 
@@ -185,11 +185,11 @@ instance Binary ScriptInput where
 toScriptInput :: ScriptOutput -> ScriptInput
 toScriptInput = ScriptInput . outputToScriptOps
 
-spendPubKey :: Signature -> ScriptInput
-spendPubKey sig = ScriptInput [ OP_PUSHDATA $ encode' sig ]
+spendPK :: Signature -> ScriptInput
+spendPK sig = ScriptInput [ OP_PUSHDATA $ encode' sig ]
 
-spendPubKeyHash :: Signature -> PubKey -> ScriptInput
-spendPubKeyHash sig pub = 
+spendPKHash :: Signature -> PubKey -> ScriptInput
+spendPKHash sig pub = 
     ScriptInput [ OP_PUSHDATA $ encode' sig
                 , OP_PUSHDATA $ encode' pub
                 ]
@@ -207,39 +207,39 @@ spendSig3 sig1 sig2 sig3 =
                 , OP_PUSHDATA $ encode' sig3
                 ]
 
-spendScriptHash :: ScriptInput -> ScriptOutput -> ScriptInput
-spendScriptHash (ScriptInput ops) so =
+spendSHash :: ScriptInput -> ScriptOutput -> ScriptInput
+spendSHash (ScriptInput ops) so =
     ScriptInput $ ops ++ [OP_PUSHDATA $ encode' so]
 
-parseInputPubKey :: ScriptInput -> Maybe Signature
-parseInputPubKey (ScriptInput ops) = case ops of
+parsePK :: ScriptInput -> Maybe Signature
+parsePK (ScriptInput ops) = case ops of
     [OP_PUSHDATA s] -> decodeEither s Nothing Just
     _       -> Nothing
 
-parseInputPubKeyHash :: ScriptInput -> Maybe (Signature, PubKey)
-parseInputPubKeyHash (ScriptInput ops) = case ops of
+parsePKHash :: ScriptInput -> Maybe (Signature, PubKey)
+parsePKHash (ScriptInput ops) = case ops of
     [OP_PUSHDATA s, OP_PUSHDATA p] ->
         (,) <$> (decodeEither s Nothing Just) 
             <*> (decodeEither p Nothing Just)
     _ -> Nothing
 
-parseInputSig2 :: ScriptInput -> Maybe (Signature, Signature)
-parseInputSig2 (ScriptInput ops) = case ops of
+parseSig2 :: ScriptInput -> Maybe (Signature, Signature)
+parseSig2 (ScriptInput ops) = case ops of
     [OP_PUSHDATA s1, OP_PUSHDATA s2] ->
         (,) <$> (decodeEither s1 Nothing Just) 
             <*> (decodeEither s2 Nothing Just)
     _ -> Nothing
 
-parseInputSig3 :: ScriptInput -> Maybe (Signature, Signature, Signature)
-parseInputSig3 (ScriptInput ops) = case ops of
+parseSig3 :: ScriptInput -> Maybe (Signature, Signature, Signature)
+parseSig3 (ScriptInput ops) = case ops of
     [OP_PUSHDATA s1, OP_PUSHDATA s2, OP_PUSHDATA s3] ->
         (,,) <$> (decodeEither s1 Nothing Just) 
              <*> (decodeEither s2 Nothing Just)
              <*> (decodeEither s3 Nothing Just)
     _ -> Nothing
 
-parseInputScriptHash :: ScriptInput -> Maybe (ScriptInput, ScriptOutput)
-parseInputScriptHash (ScriptInput ops) = case last ops of
+parseSHash :: ScriptInput -> Maybe (ScriptInput, ScriptOutput)
+parseSHash (ScriptInput ops) = case last ops of
     OP_PUSHDATA bs -> 
         ((,) $ ScriptInput $ init ops) <$> decodeEither bs Nothing Just
     _ -> Nothing
