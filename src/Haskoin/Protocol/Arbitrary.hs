@@ -91,7 +91,7 @@ instance Arbitrary TxOut where
                       <*> arbitrary
 
 instance Arbitrary OutPoint where
-    arbitrary = OutPoint <$> (hash256 <$> arbitrary)
+    arbitrary = OutPoint <$> arbitrary
                          <*> arbitrary
 
 instance Arbitrary Block where
@@ -125,16 +125,16 @@ instance Arbitrary ScriptOp where
 
 instance Arbitrary GetBlocks where
     arbitrary = GetBlocks <$> arbitrary
-                          <*> (listOf (hash256 <$> arbitrary))
-                          <*> (hash256 <$> arbitrary)
+                          <*> (listOf arbitrary)
+                          <*> arbitrary
 
 instance Arbitrary GetData where
     arbitrary = GetData <$> (listOf arbitrary)
 
 instance Arbitrary GetHeaders where
     arbitrary = GetHeaders <$> arbitrary
-                           <*> (listOf (hash256 <$> arbitrary))
-                           <*> (hash256 <$> arbitrary)
+                           <*> (listOf arbitrary)
+                           <*> arbitrary
 
 instance Arbitrary Headers where
     arbitrary = Headers <$> (listOf (liftM2 (,) arbitrary arbitrary))
@@ -170,23 +170,23 @@ instance Arbitrary MessageHeader where
     arbitrary = MessageHeader <$> arbitrary
                               <*> arbitrary
                               <*> arbitrary
-                              <*> (chksum32 <$> arbitrary)
+                              <*> arbitrary
 
 instance Arbitrary Message where
-    arbitrary = oneof [ MVersion <$> arbitrary
+    arbitrary = oneof [ MVersion    <$> arbitrary
                       , return MVerAck
-                      , MAddr <$> arbitrary
-                      , MInv <$> arbitrary
-                      , MGetData <$> arbitrary
-                      , MNotFound <$> arbitrary
-                      , MGetBlocks <$> arbitrary
+                      , MAddr       <$> arbitrary
+                      , MInv        <$> arbitrary
+                      , MGetData    <$> arbitrary
+                      , MNotFound   <$> arbitrary
+                      , MGetBlocks  <$> arbitrary
                       , MGetHeaders <$> arbitrary
-                      , MTx <$> arbitrary
-                      , MBlock <$> arbitrary
-                      , MHeaders <$> arbitrary
+                      , MTx         <$> arbitrary
+                      , MBlock      <$> arbitrary
+                      , MHeaders    <$> arbitrary
                       , return MGetAddr
-                      , MPing <$> arbitrary
-                      , MPong <$> arbitrary
-                      , MAlert <$> arbitrary
+                      , MPing       <$> arbitrary
+                      , MPong       <$> arbitrary
+                      , MAlert      <$> arbitrary
                       ]
 
