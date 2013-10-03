@@ -6,6 +6,7 @@ module Haskoin.Protocol.Script
 import Control.Monad (liftM2)
 import Control.Applicative ((<$>), (<*>))
 
+import Data.Data
 import Data.Word (Word8)
 import Data.Binary (Binary, get, put)
 import Data.Binary.Get 
@@ -37,6 +38,7 @@ import Haskoin.Util
     , toStrictBS
     , decodeEither
     , encode'
+    , bsToHex
     )
 import Haskoin.Crypto 
     ( PubKey
@@ -101,7 +103,38 @@ data ScriptOp =
     -- Other
     OP_PUBKEY PubKey |
     OP_INVALIDOPCODE Word8
-        deriving (Eq, Show)
+        deriving Eq 
+
+instance Show ScriptOp where
+    show op = case op of
+        (OP_PUSHDATA bs)     -> "OP_PUSHDATA " ++ (show $ bsToHex bs)
+        OP_FALSE             -> "OP_FALSE"
+        OP_1NEGATE           -> "OP_1NEGATE"
+        OP_1                 -> "OP_1"
+        OP_2                 -> "OP_2"
+        OP_3                 -> "OP_3"
+        OP_4                 -> "OP_4"
+        OP_5                 -> "OP_5"
+        OP_6                 -> "OP_6"
+        OP_7                 -> "OP_7"
+        OP_8                 -> "OP_8"
+        OP_9                 -> "OP_9"
+        OP_10                -> "OP_10"
+        OP_11                -> "OP_11"
+        OP_12                -> "OP_12"
+        OP_13                -> "OP_13"
+        OP_14                -> "OP_14"
+        OP_15                -> "OP_15"
+        OP_16                -> "OP_16"
+        OP_VERIFY            -> "OP_VERIFY"
+        OP_DUP               -> "OP_DUP"
+        OP_EQUAL             -> "OP_EQUAL"
+        OP_EQUALVERIFY       -> "OP_EQUALVERIFY"
+        OP_HASH160           -> "OP_HASH160"
+        OP_CHECKSIG          -> "OP_CHECKSIG"
+        OP_CHECKMULTISIG     -> "OP_CHECKMULTISIG"
+        (OP_PUBKEY p)        -> "OP_PUBKEY " ++ (show $ bsToHex $ encode' p)   
+        (OP_INVALIDOPCODE w) -> "OP_INVALIDOPCODE " ++ (show w)
 
 instance Binary ScriptOp where
 
