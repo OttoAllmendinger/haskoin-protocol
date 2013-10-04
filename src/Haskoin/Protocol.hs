@@ -27,6 +27,8 @@ module Haskoin.Protocol
 , VarInt(..)
 , VarString(..)
 , Version(..)
+, getScriptOps
+, putScriptOps
 ) where
 
 import Haskoin.Protocol.Message

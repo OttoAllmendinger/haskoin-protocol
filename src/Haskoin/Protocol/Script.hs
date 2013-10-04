@@ -1,6 +1,8 @@
 module Haskoin.Protocol.Script 
 ( ScriptOp(..)
 , Script(..)
+, getScriptOps
+, putScriptOps
 ) where
 
 import Control.Monad (liftM2)
