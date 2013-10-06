@@ -37,7 +37,7 @@ import qualified Data.ByteString as BS
 import Haskoin.Protocol.VarInt
 import Haskoin.Util 
     ( isolate
-    , toStrictBS
+    , runPut'
     , decodeEither
     , encode'
     , bsToHex
@@ -61,7 +61,7 @@ instance Binary Script where
         isolate (fromIntegral len) $ Script <$> getScriptOps
 
     put (Script ops) = do
-        let bs = toStrictBS $ runPut $ putScriptOps ops
+        let bs = runPut' $ putScriptOps ops
         put $ VarInt $ fromIntegral $ BS.length bs
         putByteString bs
 

@@ -15,7 +15,6 @@ import qualified Data.ByteString as BS
     , append
     , empty
     )
-import qualified Data.ByteString.Lazy as BL (empty)
 
 import Haskoin.Protocol.MessageHeader
 import Haskoin.Protocol.Version
@@ -31,7 +30,7 @@ import Haskoin.Protocol.Headers
 import Haskoin.Protocol.Ping
 import Haskoin.Protocol.Alert
 
-import Haskoin.Util (isolate, toStrictBS)
+import Haskoin.Util (isolate, encode')
 import Haskoin.Crypto (chksum32)
 
 networkMagic :: Word32
@@ -86,26 +85,24 @@ instance Binary Message where
                 _            -> fail $ "get: Invalid command " ++ (show cmd)
 
     put msg = do
-        let (cmd, bs) = case msg of
-                (MVersion m)    -> (MCVersion, encode m)
-                (MVerAck)       -> (MCVerAck, BL.empty)
-                (MAddr m)       -> (MCAddr, encode m)
-                (MInv m)        -> (MCInv, encode m)
-                (MGetData m)    -> (MCGetData, encode m)
-                (MNotFound m)   -> (MCNotFound, encode m)
-                (MGetBlocks m)  -> (MCGetBlocks, encode m)
-                (MGetHeaders m) -> (MCGetHeaders, encode m)
-                (MTx m)         -> (MCTx, encode m)
-                (MBlock m)      -> (MCBlock, encode m)
-                (MHeaders m)    -> (MCHeaders, encode m)
-                (MGetAddr)      -> (MCGetAddr, BL.empty)
-                (MPing m)       -> (MCPing, encode m)
-                (MPong m)       -> (MCPong, encode m)
-                (MAlert m)      -> (MCAlert, encode m)
-            payload  = toStrictBS bs
+        let (cmd, payload) = case msg of
+                (MVersion m)    -> (MCVersion, encode' m)
+                (MVerAck)       -> (MCVerAck, BS.empty)
+                (MAddr m)       -> (MCAddr, encode' m)
+                (MInv m)        -> (MCInv, encode' m)
+                (MGetData m)    -> (MCGetData, encode' m)
+                (MNotFound m)   -> (MCNotFound, encode' m)
+                (MGetBlocks m)  -> (MCGetBlocks, encode' m)
+                (MGetHeaders m) -> (MCGetHeaders, encode' m)
+                (MTx m)         -> (MCTx, encode' m)
+                (MBlock m)      -> (MCBlock, encode' m)
+                (MHeaders m)    -> (MCHeaders, encode' m)
+                (MGetAddr)      -> (MCGetAddr, BS.empty)
+                (MPing m)       -> (MCPing, encode' m)
+                (MPong m)       -> (MCPong, encode' m)
+                (MAlert m)      -> (MCAlert, encode' m)
             chk = chksum32 payload
             len = fromIntegral $ BS.length payload
             head = MessageHeader networkMagic cmd len chk
-            headBS = toStrictBS $ encode head
-        putByteString $ headBS `BS.append` payload
+        putByteString $ (encode' head) `BS.append` payload
         
