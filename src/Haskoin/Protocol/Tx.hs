@@ -6,7 +6,7 @@ module Haskoin.Protocol.Tx
 , CoinbaseTx(..)
 ) where
 
-import Control.Monad (replicateM, forM_)
+import Control.Monad (replicateM, forM_, liftM2, unless)
 import Control.Applicative ((<$>),(<*>))
 
 import Data.Word (Word32, Word64)
@@ -103,7 +103,11 @@ data TxOut = TxOut
     } deriving (Eq, Show)
 
 instance Binary TxOut where
-    get = TxOut <$> getWord64le <*> get
+    get = do
+        val <- getWord64le
+        unless (val <= 2100000000000000) $ fail $
+            "Invalid TxOut value: " ++ (show val)
+        TxOut val <$> get
     put (TxOut o s) = putWord64le o >> put s
 
 data OutPoint = OutPoint 
@@ -112,6 +116,10 @@ data OutPoint = OutPoint
     } deriving (Eq, Show)
 
 instance Binary OutPoint where
-    get = OutPoint <$> get <*> getWord32le
+    get = do
+        (h,i) <- liftM2 (,) get getWord32le
+        unless (i <= 2147483647) $ fail $
+            "Invalid OutPoint index: " ++ (show i)
+        return $ OutPoint h i
     put (OutPoint h i) = put h >> putWord32le i
 

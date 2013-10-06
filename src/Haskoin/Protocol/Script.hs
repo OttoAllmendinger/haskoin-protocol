@@ -80,7 +80,7 @@ data ScriptOp =
 
     -- Pushing Data
     OP_PUSHDATA BS.ByteString |
-    OP_FALSE | 
+    OP_0 | 
     OP_1NEGATE | 
     OP_1  | OP_2  | OP_3  | OP_4  | 
     OP_5  | OP_6  | OP_7  | OP_8  | 
@@ -110,7 +110,7 @@ data ScriptOp =
 instance Show ScriptOp where
     show op = case op of
         (OP_PUSHDATA bs)     -> "OP_PUSHDATA " ++ (show $ bsToHex bs)
-        OP_FALSE             -> "OP_FALSE"
+        OP_0                 -> "OP_0"
         OP_1NEGATE           -> "OP_1NEGATE"
         OP_1                 -> "OP_1"
         OP_2                 -> "OP_2"
@@ -141,7 +141,7 @@ instance Show ScriptOp where
 instance Binary ScriptOp where
 
     get = go =<< (fromIntegral <$> getWord8) 
-        where go op | op == 0x00 = return $ OP_FALSE
+        where go op | op == 0x00 = return $ OP_0
                     | op <= 0x4b = do
                         payload <- getByteString (fromIntegral op)
                         return $ OP_PUSHDATA payload
@@ -207,7 +207,7 @@ instance Binary ScriptOp where
                     | otherwise = 
                         fail "bitcoinPut OP_PUSHDATA payload too big"
 
-        OP_FALSE             -> putWord8 0x00
+        OP_0                 -> putWord8 0x00
         OP_1NEGATE           -> putWord8 0x4f
         OP_1                 -> putWord8 0x51
         OP_2                 -> putWord8 0x52

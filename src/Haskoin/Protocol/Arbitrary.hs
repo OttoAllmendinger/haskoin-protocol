@@ -87,12 +87,12 @@ instance Arbitrary TxIn where
                      <*> arbitrary
 
 instance Arbitrary TxOut where
-    arbitrary = TxOut <$> arbitrary
+    arbitrary = TxOut <$> (choose (0,2100000000000000))
                       <*> arbitrary
 
 instance Arbitrary OutPoint where
     arbitrary = OutPoint <$> arbitrary
-                         <*> arbitrary
+                         <*> (choose (0,2147483647))
 
 instance Arbitrary Block where
     arbitrary = do
@@ -105,7 +105,7 @@ instance Arbitrary Block where
 
 instance Arbitrary ScriptOp where
     arbitrary = oneof [ OP_PUSHDATA <$> nonEmptyBS
-                      , return OP_FALSE
+                      , return OP_0
                       , return OP_1NEGATE
                       , return OP_1
                       , return OP_2, return OP_3, return OP_4, return OP_5
