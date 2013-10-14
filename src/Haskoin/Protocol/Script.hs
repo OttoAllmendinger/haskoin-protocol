@@ -108,7 +108,7 @@ data ScriptOp =
 
 instance Show ScriptOp where
     show op = case op of
-        (OP_PUSHDATA bs)     -> "OP_PUSHDATA " ++ (bsToHex bs)
+        (OP_PUSHDATA bs)     -> "OP_PUSHDATA " ++ (show $ bsToHex bs)
         OP_0                 -> "OP_0"
         OP_1NEGATE           -> "OP_1NEGATE"
         OP_1                 -> "OP_1"
@@ -134,7 +134,7 @@ instance Show ScriptOp where
         OP_HASH160           -> "OP_HASH160"
         OP_CHECKSIG          -> "OP_CHECKSIG"
         OP_CHECKMULTISIG     -> "OP_CHECKMULTISIG"
-        (OP_PUBKEY p)        -> "OP_PUBKEY " ++ (bsToHex $ encode' p)   
+        (OP_PUBKEY p)        -> "OP_PUBKEY " ++ (show $ bsToHex $ encode' p)   
         (OP_INVALIDOPCODE w) -> "OP_INVALIDOPCODE " ++ (show w)
 
 instance Binary ScriptOp where
