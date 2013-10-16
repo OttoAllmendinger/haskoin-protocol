@@ -347,7 +347,7 @@ instance Binary ScriptOp where
 
     put op = case op of
         (OP_PUSHDATA payload) -> go payload (BS.length payload)
-            where go p len 
+            where go p len
                     | len <= 0 = fail "OP_PUSHDATA: data length must be > 0"
                     | len <= 0x4b = do
                         putWord8 $ fromIntegral len
@@ -395,7 +395,11 @@ instance Binary ScriptOp where
 
         -- Flow Control
         OP_NOP               -> putWord8 0x61
-        OP_NOTIF             -> putWord8 0x63
+        -- OP_VER            -> putWord8 0x62
+        OP_IF                -> putWord8 0x63
+        OP_NOTIF             -> putWord8 0x64
+        -- OP_VERIF          -> putWord8 0x65
+        -- OP_VERNOTIF       -> putWord8 0x66
         OP_ELSE              -> putWord8 0x67
         OP_ENDIF             -> putWord8 0x68
         OP_VERIFY            -> putWord8 0x69
