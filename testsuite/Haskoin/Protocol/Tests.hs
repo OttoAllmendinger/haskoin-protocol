@@ -9,6 +9,8 @@ import Data.Binary
 import Data.Binary.Get
 import Data.Binary.Put
 
+import qualified Data.ByteString.Lazy as BL
+
 import Haskoin.Protocol.Arbitrary
 import Haskoin.Protocol
 import Haskoin.Protocol.Script
@@ -46,8 +48,24 @@ tests =
         , testProperty "MessageHeader" (metaGetPut :: MessageHeader -> Bool)
         , testProperty "Message" (metaGetPut :: Message -> Bool)
         ]
+    , testGroup "De-serialize & serialize arbitrary bytes into ScriptOps"
+        [ testProperty "ScriptOp" testEncodeDecode ]
     ]
 
 metaGetPut :: (Binary a, Eq a) => a -> Bool
 metaGetPut x = (runGet get (runPut $ put x)) == x
 
+
+testEncodeDecode :: Word8 -> Bool
+testEncodeDecode x
+    -- ignore constants
+    | (x > 0) && (x < 0x4f) = True
+    | x == 0xfe = True
+    | x == 0xfd = True
+    | otherwise = case encode x of
+        -- ignore invalid opcodes
+        OP_INVALIDOPCODE _ -> True
+        -- decode . encode == id
+        op -> decode x == x
+        where encode x = runGet get $ BL.singleton x
+              decode x = BL.head $ runPut $ put x
