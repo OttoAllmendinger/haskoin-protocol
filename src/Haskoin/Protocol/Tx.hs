@@ -25,11 +25,13 @@ import Data.Binary.Put
 import qualified Data.ByteString as BS 
     ( ByteString
     , length
+    , reverse
     )
 
 import Haskoin.Protocol.VarInt
 import Haskoin.Protocol.Script
 import Haskoin.Crypto (Hash256)
+import Haskoin.Util (bsToHex, encode')
 
 data Tx = Tx 
     { txVersion  :: !Word32
@@ -113,7 +115,11 @@ instance Binary TxOut where
 data OutPoint = OutPoint 
     { outPointHash  :: !Hash256
     , outPointIndex :: !Word32
-    } deriving (Eq, Show)
+    } deriving Eq
+
+instance Show OutPoint where
+    show (OutPoint h i) = "OutPoint { " ++ (show h') ++ " " ++ (show i) ++ " }"
+        where h' = bsToHex $ BS.reverse $ encode' h
 
 instance Binary OutPoint where
     get = do
