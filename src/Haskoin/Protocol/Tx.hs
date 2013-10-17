@@ -118,7 +118,7 @@ data OutPoint = OutPoint
     } deriving Eq
 
 instance Show OutPoint where
-    show (OutPoint h i) = "OutPoint { " ++ (show h') ++ " " ++ (show i) ++ " }"
+    show (OutPoint h i) = show ("txid = " ++ h',"index = " ++ (show i))
         where h' = bsToHex $ BS.reverse $ encode' h
 
 instance Binary OutPoint where
