@@ -29,6 +29,7 @@ module Haskoin.Protocol
 , Version(..)
 , getScriptOps
 , putScriptOps
+, txid
 ) where
 
 import Haskoin.Protocol.Message

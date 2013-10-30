@@ -4,6 +4,7 @@ module Haskoin.Protocol.Tx
 , TxOut(..)
 , OutPoint(..)
 , CoinbaseTx(..)
+, txid
 ) where
 
 import Control.Monad (replicateM, forM_, liftM2, unless)
@@ -30,7 +31,7 @@ import qualified Data.ByteString as BS
 
 import Haskoin.Protocol.VarInt
 import Haskoin.Protocol.Script
-import Haskoin.Crypto (Hash256)
+import Haskoin.Crypto (Hash256, doubleHash256)
 import Haskoin.Util (bsToHex, encode')
 
 data Tx = Tx 
@@ -128,4 +129,7 @@ instance Binary OutPoint where
             "Invalid OutPoint index: " ++ (show i)
         return $ OutPoint h i
     put (OutPoint h i) = put h >> putWord32le i
+
+txid :: Tx -> Hash256
+txid = doubleHash256 . encode' 
 
