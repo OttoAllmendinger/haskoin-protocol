@@ -3,6 +3,8 @@ module Haskoin.Protocol.Script
 , Script(..)
 , getScriptOps
 , putScriptOps
+, decodeScriptOps
+, encodeScriptOps
 ) where
 
 import Control.Monad (liftM2)
@@ -40,6 +42,7 @@ import Haskoin.Util
     , runPut'
     , encode'
     , bsToHex
+    , fromRunGet
     )
 import Haskoin.Crypto 
     ( PubKey
@@ -74,6 +77,13 @@ getScriptOps = do
 putScriptOps :: [ScriptOp] -> Put
 putScriptOps (x:xs) = put x >> putScriptOps xs
 putScriptOps _       = return ()
+
+decodeScriptOps :: BS.ByteString -> Either String Script
+decodeScriptOps bs = fromRunGet getScriptOps bs msg (return . Script)
+    where msg = Left "decodeScriptOps: Could not decode scriptops"
+
+encodeScriptOps :: Script -> BS.ByteString
+encodeScriptOps = runPut' . putScriptOps . runScript
 
 data ScriptOp =
 

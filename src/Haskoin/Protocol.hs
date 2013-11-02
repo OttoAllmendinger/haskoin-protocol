@@ -29,6 +29,8 @@ module Haskoin.Protocol
 , Version(..)
 , getScriptOps
 , putScriptOps
+, decodeScriptOps
+, encodeScriptOps
 , txid
 ) where
 
