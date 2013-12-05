@@ -75,7 +75,7 @@ instance Binary CoinbaseTx where
                 skip 36 -- skip OutPoint
                 (VarInt len)   <- get
                 coinbase       <- getByteString (fromIntegral len)
-                skip 4   -- skip sequence
+                skip 4  -- skip sequence
                 return coinbase
             replicateList (VarInt c) = replicateM (fromIntegral c) get
 

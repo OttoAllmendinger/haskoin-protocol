@@ -42,7 +42,7 @@ library
                        bytestring == 0.10.*, 
                        haskoin-util == 0.1.*,
                        haskoin-crypto == 0.1.*,
-                       QuickCheck == 2.5.*
+                       QuickCheck == 2.6.*
     hs-source-dirs:    src
     ghc-options:       -O2
 
@@ -54,7 +54,7 @@ Test-Suite test-haskoin-protocol
                        bytestring == 0.10.*, 
                        haskoin-util == 0.1.*,
                        haskoin-crypto == 0.1.*,
-                       QuickCheck == 2.5.*,
+                       QuickCheck == 2.6.*,
                        test-framework == 0.8.*,
                        test-framework-quickcheck2 == 0.3.*,
                        test-framework-hunit == 0.3.*,
