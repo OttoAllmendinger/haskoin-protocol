@@ -46,8 +46,12 @@ tests =
         , testProperty "MessageHeader" (metaGetPut :: MessageHeader -> Bool)
         , testProperty "Message" (metaGetPut :: Message -> Bool)
         ]
+    , testGroup "Transactions"
+        [ testProperty "decode . encode Txid" decEncTxid ]
     ]
 
 metaGetPut :: (Binary a, Eq a) => a -> Bool
 metaGetPut x = (runGet get (runPut $ put x)) == x
 
+decEncTxid :: Hash256 -> Bool
+decEncTxid h = (fromJust $ decodeTxid $ encodeTxid h) == h

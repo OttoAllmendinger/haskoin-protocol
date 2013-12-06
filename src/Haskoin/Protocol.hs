@@ -32,6 +32,8 @@ module Haskoin.Protocol
 , decodeScriptOps
 , encodeScriptOps
 , txid
+, encodeTxid
+, decodeTxid
 ) where
 
 import Haskoin.Protocol.Message

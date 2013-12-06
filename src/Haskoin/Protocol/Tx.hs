@@ -5,6 +5,8 @@ module Haskoin.Protocol.Tx
 , OutPoint(..)
 , CoinbaseTx(..)
 , txid
+, encodeTxid
+, decodeTxid
 ) where
 
 import Control.Monad (replicateM, forM_, liftM2, unless)
@@ -32,7 +34,7 @@ import qualified Data.ByteString as BS
 import Haskoin.Protocol.VarInt
 import Haskoin.Protocol.Script
 import Haskoin.Crypto (Hash256, doubleHash256)
-import Haskoin.Util (bsToHex, encode')
+import Haskoin.Util (bsToHex, hexToBS, encode', decodeToMaybe)
 
 data Tx = Tx 
     { txVersion  :: !Word32
@@ -132,4 +134,11 @@ instance Binary OutPoint where
 
 txid :: Tx -> Hash256
 txid = doubleHash256 . encode' 
+
+-- |Encodes a transaction ID as little endian in HEX format
+encodeTxid :: Hash256 -> String
+encodeTxid = bsToHex . BS.reverse .  encode' 
+
+decodeTxid :: String -> Maybe Hash256
+decodeTxid = (decodeToMaybe . BS.reverse =<<) . hexToBS
 

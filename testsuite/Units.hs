@@ -25,7 +25,7 @@ mapTxIDVec (v,i) = testCase name $ runTxIDVec v
 
 runTxIDVec :: (String,String) -> Assertion
 runTxIDVec (id,tx) = assertBool "TxID" $ 
-    (bsToHex $ BS.reverse $ encode' $ txid txBS) == id
+    (encodeTxid $ txid txBS) == id
     where txBS = decode' $ fromJust $ hexToBS tx
 
 txIDVec :: [(String,String)]
