@@ -122,7 +122,7 @@ data OutPoint = OutPoint
 
 instance Show OutPoint where
     show (OutPoint h i) = show ("txid = " ++ h',"index = " ++ (show i))
-        where h' = bsToHex $ BS.reverse $ encode' h
+        where h' = encodeTxid h
 
 instance Binary OutPoint where
     get = do
