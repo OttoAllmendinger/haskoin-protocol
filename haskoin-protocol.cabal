@@ -49,6 +49,7 @@ library
                        haskoin-util   == 0.0.*,
                        haskoin-crypto == 0.0.*,
                        QuickCheck     == 2.6.*
+    ghc-options:       -Wall -fno-warn-orphans
 
 Test-Suite test-haskoin-protocol
     type:              exitcode-stdio-1.0
@@ -64,4 +65,5 @@ Test-Suite test-haskoin-protocol
                        test-framework-hunit       == 0.3.*,
                        HUnit                      == 1.2.*
     hs-source-dirs:    . tests
+    ghc-options:       -Wall -fno-warn-orphans
 
