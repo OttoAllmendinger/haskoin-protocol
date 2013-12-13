@@ -54,6 +54,8 @@ library
 Test-Suite test-haskoin-protocol
     type:              exitcode-stdio-1.0
     main-is:           Main.hs
+    other-modules:     Network.Haskoin.Protocol.Tests,
+                       Units
     build-depends:     base                       == 4.6.*,
                        binary                     == 0.7.*, 
                        bytestring                 == 0.10.*, 
