@@ -1,5 +1,5 @@
 {-|
-  This package provides all of the basic types used inside the bitcoin P2P
+  This package provides all of the basic types used for the Bitcoin 
   networking protocol together with Data.Binary instances for efficiently
   serializing and de-serializing them. More information on the bitcoin protocol
   is available here: <http://en.bitcoin.it/wiki/Protocol_specification>

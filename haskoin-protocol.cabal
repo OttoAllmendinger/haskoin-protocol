@@ -2,7 +2,7 @@ name:                haskoin-protocol
 version:             0.0.1
 synopsis:            Implementation of the Bitcoin network protocol messages
 description:         
-    This package provides all of the basic types used inside the bitcoin P2P
+    This package provides all of the basic types used for the Bitcoin 
     networking protocol together with Data.Binary instances for efficiently
     serializing and de-serializing them.
 homepage:            http://github.com/plaprade/haskoin-protocol
