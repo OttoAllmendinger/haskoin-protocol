@@ -51,7 +51,7 @@ import Network.Haskoin.Crypto (PubKey)
 data Script = 
     Script { 
              -- | List of script operators defining this script
-             runScript :: [ScriptOp] 
+             scriptOps :: [ScriptOp] 
            }
     deriving (Eq, Show)
 
@@ -90,7 +90,7 @@ decodeScriptOps bs = fromRunGet getScriptOps bs msg (return . Script)
 -- | Encode a 'Script' into a ByteString by omiting the length of the script.
 -- This is used to produce scripthash addresses.
 encodeScriptOps :: Script -> BS.ByteString
-encodeScriptOps = runPut' . putScriptOps . runScript
+encodeScriptOps = runPut' . putScriptOps . scriptOps
 
 -- | Data type representing all of the operators allowed inside a 'Script'.
 data ScriptOp 
