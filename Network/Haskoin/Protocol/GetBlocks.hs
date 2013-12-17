@@ -20,9 +20,9 @@ type BlockLocator = [Hash256]
 -- bitcoin protocol to retrieve blocks from a peer by providing it a
 -- 'BlockLocator' object. The 'BlockLocator' is a sparse list of block hashes
 -- from the caller node with the purpose of informing the receiving node
--- about the state of the callers blockchain. The receiver node will detect
--- a wrong branch in the callers main chain and send the caller appropriate 
--- 'Blocks'. The response to a 'GetBlocks' message in an 'Inv' message
+-- about the state of the caller's blockchain. The receiver node will detect
+-- a wrong branch in the caller's main chain and send the caller appropriate 
+-- 'Blocks'. The response to a 'GetBlocks' message is an 'Inv' message
 -- containing the list of block hashes pertaining to the request. 
 data GetBlocks = 
     GetBlocks {
