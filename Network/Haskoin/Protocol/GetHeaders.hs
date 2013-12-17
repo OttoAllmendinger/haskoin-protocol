@@ -14,18 +14,17 @@ import Network.Haskoin.Protocol.GetBlocks (BlockLocator)
 import Network.Haskoin.Crypto (Hash256)
 
 -- | Similar to the 'GetBlocks' message type but for retrieving block headers
--- only. The response to a 'GetHeaders request is a 'Headers' message containing
--- a list of block headers pertaining to the request. A maximum of 2000 
--- block headers can be returned. 'GetHeaders' is used by thin client to
--- quickly download a blockchain where the transactions and their content
--- are irrelevant to them. 
+-- only. The response to a 'GetHeaders' request is a 'Headers' message
+-- containing a list of block headers pertaining to the request. A maximum of
+-- 2000 block headers can be returned. 'GetHeaders' is used by thin (SPV)
+-- clients to exclude block contents when synchronizing the blockchain.
 data GetHeaders = 
     GetHeaders {
                  -- | The protocol version
                  getHeadersVersion  :: !Word32
-                 -- | Block locator object. It is a list of block hashes from the
-                 -- most recent block back to the genesis block. The list is
-                 -- dense at first and sparse towards the end.
+                 -- | Block locator object. It is a list of block hashes from
+                 -- the most recent block back to the Genesis block. The list
+                 -- is dense at first and sparse towards the end.
                , getHeadersBL       :: !BlockLocator
                  -- | Hash of the last desired block header. When set to zero,
                  -- the maximum number of block headers is returned (2000)
