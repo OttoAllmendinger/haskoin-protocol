@@ -8,6 +8,7 @@ module Network.Haskoin.Protocol
 ( 
   -- * Blocks
   Block(..)
+, BlockLocator
 , GetBlocks(..)
 
   -- * Block Headers
