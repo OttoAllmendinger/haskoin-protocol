@@ -1,10 +1,10 @@
-module Haskoin.Protocol.Message ( Message(..) ) where
+module Network.Haskoin.Protocol.Message ( Message(..) ) where
 
 import Control.Monad (unless)
 import Control.Applicative ((<$>))
 
 import Data.Word (Word32)
-import Data.Binary (Binary, encode, get, put)
+import Data.Binary (Binary, get, put)
 import Data.Binary.Get 
     ( lookAhead
     , getByteString
@@ -16,42 +16,48 @@ import qualified Data.ByteString as BS
     , empty
     )
 
-import Haskoin.Protocol.MessageHeader
-import Haskoin.Protocol.Version
-import Haskoin.Protocol.Addr
-import Haskoin.Protocol.Inv
-import Haskoin.Protocol.GetData
-import Haskoin.Protocol.NotFound
-import Haskoin.Protocol.GetBlocks
-import Haskoin.Protocol.GetHeaders
-import Haskoin.Protocol.Tx
-import Haskoin.Protocol.Block
-import Haskoin.Protocol.Headers
-import Haskoin.Protocol.Ping
-import Haskoin.Protocol.Alert
+import Network.Haskoin.Protocol.MessageHeader
+import Network.Haskoin.Protocol.Version
+import Network.Haskoin.Protocol.Addr
+import Network.Haskoin.Protocol.Inv
+import Network.Haskoin.Protocol.GetData
+import Network.Haskoin.Protocol.NotFound
+import Network.Haskoin.Protocol.GetBlocks
+import Network.Haskoin.Protocol.GetHeaders
+import Network.Haskoin.Protocol.Tx
+import Network.Haskoin.Protocol.Block
+import Network.Haskoin.Protocol.Headers
+import Network.Haskoin.Protocol.Ping
+import Network.Haskoin.Protocol.Alert
 
-import Haskoin.Util (isolate, encode')
-import Haskoin.Crypto (chksum32)
+import Network.Haskoin.Util (isolate, encode')
+import Network.Haskoin.Crypto (chksum32)
 
 networkMagic :: Word32
 networkMagic = 0xf9beb4d9
 
-data Message = 
-    MVersion Version | 
-    MVerAck | 
-    MAddr Addr | 
-    MInv Inv |
-    MGetData GetData |
-    MNotFound NotFound |
-    MGetBlocks GetBlocks |
-    MGetHeaders GetHeaders |
-    MTx Tx |
-    MBlock Block |
-    MHeaders Headers |
-    MGetAddr |
-    MPing Ping |
-    MPong Pong |
-    MAlert Alert
+-- | The 'Message' type is used to identify all the valid messages that can be
+-- sent between bitcoin peers. Only values of type 'Message' will be accepted
+-- by other bitcoin peers as bitcoin protocol messages need to be correctly
+-- serialized with message headers. Serializing a 'Message' value will
+-- include the 'MessageHeader' with the correct checksum value automatically.
+-- No need to add the 'MessageHeader' separately.
+data Message 
+    = MVersion Version 
+    | MVerAck 
+    | MAddr Addr 
+    | MInv Inv 
+    | MGetData GetData 
+    | MNotFound NotFound 
+    | MGetBlocks GetBlocks 
+    | MGetHeaders GetHeaders 
+    | MTx Tx 
+    | MBlock Block 
+    | MHeaders Headers 
+    | MGetAddr 
+    | MPing Ping 
+    | MPong Pong 
+    | MAlert Alert
     deriving (Eq, Show)
 
 instance Binary Message where
@@ -63,7 +69,7 @@ instance Binary Message where
             (fail $ "get: Invalid network magic bytes: " ++ (show mgc))
         unless (chksum32 bs == chk) 
             (fail $ "get: Invalid message checksum: " ++ (show chk))
-        if (fromIntegral len) > 0 
+        if len > 0 
             then isolate (fromIntegral len) $ case cmd of
                 MCVersion    -> MVersion <$> get
                 MCAddr       -> MAddr <$> get
@@ -103,6 +109,6 @@ instance Binary Message where
                 (MAlert m)      -> (MCAlert, encode' m)
             chk = chksum32 payload
             len = fromIntegral $ BS.length payload
-            head = MessageHeader networkMagic cmd len chk
-        putByteString $ (encode' head) `BS.append` payload
+            header = MessageHeader networkMagic cmd len chk
+        putByteString $ (encode' header) `BS.append` payload
         

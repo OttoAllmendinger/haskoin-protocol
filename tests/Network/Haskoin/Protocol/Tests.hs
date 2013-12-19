@@ -1,8 +1,7 @@
-module Haskoin.Protocol.Tests (tests) where
+module Network.Haskoin.Protocol.Tests (tests) where
 
-import Test.QuickCheck.Property hiding ((.&.))
-import Test.Framework
-import Test.Framework.Providers.QuickCheck2
+import Test.Framework (Test, testGroup)
+import Test.Framework.Providers.QuickCheck2 (testProperty)
 
 import Data.Maybe
 import Data.Binary
@@ -11,10 +10,10 @@ import Data.Binary.Put
 
 import qualified Data.ByteString.Lazy as BL
 
-import Haskoin.Protocol.Arbitrary
-import Haskoin.Protocol
-import Haskoin.Protocol.Script
-import Haskoin.Crypto
+import Network.Haskoin.Protocol.Arbitrary()
+import Network.Haskoin.Protocol
+import Network.Haskoin.Protocol.Script
+import Network.Haskoin.Crypto
 
 tests :: [Test]
 tests = 
@@ -50,6 +49,8 @@ tests =
         ]
     , testGroup "De-serialize & serialize arbitrary bytes into ScriptOps"
         [ testProperty "ScriptOp" testEncodeDecode ]
+    , testGroup "Transactions"
+        [ testProperty "decode . encode Txid" decEncTxid ]
     ]
 
 metaGetPut :: (Binary a, Eq a) => a -> Bool
@@ -69,3 +70,5 @@ testEncodeDecode x
         op -> decode x == x
         where encode x = runGet get $ BL.singleton x
               decode x = BL.head $ runPut $ put x
+decEncTxid :: Hash256 -> Bool
+decEncTxid h = (fromJust $ decodeTxid $ encodeTxid h) == h

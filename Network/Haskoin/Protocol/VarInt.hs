@@ -1,4 +1,4 @@
-module Haskoin.Protocol.VarInt ( VarInt(..) ) where
+module Network.Haskoin.Protocol.VarInt ( VarInt(..) ) where
  
 import Data.Word (Word64)
 import Control.Applicative ((<$>))
@@ -17,16 +17,19 @@ import Data.Binary.Put
     , putWord64le
     )
 
+-- | Data type representing a variable length integer. The 'VarInt' type
+-- usually precedes an array or a string that can vary in length. 
 newtype VarInt = VarInt { getVarInt :: Word64 }
     deriving (Eq, Show)
     
 instance Binary VarInt where
 
     get = VarInt <$> ( getWord8 >>= go )
-        where go 0xff = getWord64le
-              go 0xfe = fromIntegral <$> getWord32le
-              go 0xfd = fromIntegral <$> getWord16le
-              go x    = fromIntegral <$> return x
+      where 
+        go 0xff = getWord64le
+        go 0xfe = fromIntegral <$> getWord32le
+        go 0xfd = fromIntegral <$> getWord16le
+        go x    = fromIntegral <$> return x
 
     put (VarInt x)
         | x < 0xfd = 

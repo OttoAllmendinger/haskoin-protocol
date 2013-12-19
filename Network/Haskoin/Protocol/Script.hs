@@ -1,16 +1,15 @@
-{-# LANGUAGE StandaloneDeriving, OverlappingInstances, DeriveDataTypeable #-}
-
-module Haskoin.Protocol.Script 
+module Network.Haskoin.Protocol.Script 
 ( ScriptOp(..)
 , Script(..)
 , getScriptOps
 , putScriptOps
+, decodeScriptOps
+, encodeScriptOps
 ) where
 
 import Control.Monad (liftM2)
-import Control.Applicative ((<$>), (<*>))
+import Control.Applicative ((<$>))
 
-import Data.Data
 import Data.Word (Word8)
 import Data.Binary (Binary, get, put)
 import Data.Binary.Get 
@@ -19,16 +18,13 @@ import Data.Binary.Get
     , getWord8
     , getWord16le
     , getWord32le
-    , getWord32be
     , getByteString
     )
 import Data.Binary.Put 
     ( Put 
-    , runPut
     , putWord8
     , putWord16le
     , putWord32le
-    , putWord32be
     , putByteString
     )
 import qualified Data.ByteString as BS
@@ -36,24 +32,27 @@ import qualified Data.ByteString as BS
     , length
     )
 
-import Haskoin.Protocol.VarInt
-import Haskoin.Util 
+import Network.Haskoin.Protocol.VarInt
+import Network.Haskoin.Util 
     ( isolate
     , runPut'
     , encode'
     , bsToHex
+    , fromRunGet
     )
-import Haskoin.Crypto 
-    ( PubKey
-    , pubKeyAddr
-    , Hash160
-    , hash160
-    , hash256BS
-    , Address(..)
-    , Signature
-    )
+import Network.Haskoin.Crypto (PubKey, Hash160)
 
-data Script = Script { runScript :: [ScriptOp] }
+-- | Data type representing a transaction script. Scripts are defined as lists
+-- of script operators 'ScriptOp'. Scripts are used to:
+--
+-- * Define the spending conditions in the output of a transaction
+--
+-- * Provide the spending signatures in the input of a transaction
+data Script = 
+    Script { 
+             -- | List of script operators defining this script
+             scriptOps :: [ScriptOp] 
+           }
     deriving (Eq, Show)
 
 instance Binary Script where
@@ -66,6 +65,8 @@ instance Binary Script where
         put $ VarInt $ fromIntegral $ BS.length bs
         putByteString bs
 
+-- | Deserialize a list of 'ScriptOp' inside the 'Data.Binary.Get' monad.
+-- This deserialization does not take into account the length of the script.
 getScriptOps :: Get [ScriptOp]
 getScriptOps = do
     empty <- isEmpty
@@ -73,10 +74,25 @@ getScriptOps = do
         then return [] 
         else liftM2 (:) get getScriptOps
 
+-- | Serialize a list of 'ScriptOp' inside the 'Data.Binary.Put' monad.
+-- This serialization does not take into account the length of the script.
 putScriptOps :: [ScriptOp] -> Put
 putScriptOps (x:xs) = put x >> putScriptOps xs
 putScriptOps _       = return ()
 
+-- | Decode a 'Script' from a ByteString by omiting the length of the script.
+-- This is used to produce scripthash addresses.
+decodeScriptOps :: BS.ByteString -> Either String Script
+decodeScriptOps bs = fromRunGet getScriptOps bs msg (return . Script)
+  where 
+    msg = Left "decodeScriptOps: Could not decode scriptops"
+
+-- | Encode a 'Script' into a ByteString by omiting the length of the script.
+-- This is used to produce scripthash addresses.
+encodeScriptOps :: Script -> BS.ByteString
+encodeScriptOps = runPut' . putScriptOps . scriptOps
+
+-- | Data type representing all of the operators allowed inside a 'Script'.
 data ScriptOp =
 
     -- Pushing Data
@@ -139,7 +155,6 @@ data ScriptOp =
     -- Arithmetic
     OP_1ADD |
     OP_1SUB |
-    OP_2SUB |
     OP_2MUL |
     OP_2DIV |
     OP_NEGATE |
@@ -179,11 +194,11 @@ data ScriptOp =
     OP_CHECKMULTISIGVERIFY |
 
     -- Other
+
     OP_PUBKEYHASH Hash160 |
     OP_PUBKEY PubKey |
     OP_INVALIDOPCODE Word8
         deriving (Eq, Show)
-
 
 {-
 -- making ScriptOp an instsance of Show is a little verbose
@@ -196,6 +211,7 @@ instance Show ScriptOp where
         (OP_PUBKEY p)        -> "OP_PUBKEY " ++ (show $ bsToHex $ encode' p)
         (OP_INVALIDOPCODE w) -> "OP_INVALIDOPCODE " ++ (show w)
 -}
+
 
 instance Binary ScriptOp where
 

@@ -1,15 +1,18 @@
-module Haskoin.Protocol.Arbitrary () where
+{-|
+  This package provides QuickCheck Arbitrary instances for all the protocol
+  data types defined in 'Network.Haskoin.Protocol'.
+-}
+module Network.Haskoin.Protocol.Arbitrary () where
 
 import Test.QuickCheck
-import Haskoin.Util.Arbitrary (nonEmptyBS)
-import Haskoin.Crypto.Arbitrary
+import Network.Haskoin.Util.Arbitrary (nonEmptyBS)
+import Network.Haskoin.Crypto.Arbitrary()
 
 import Control.Monad
 import Control.Applicative 
 
-import Haskoin.Protocol
-import Haskoin.Crypto
-import Haskoin.Util 
+import Network.Haskoin.Protocol
+import Network.Haskoin.Crypto
 
 instance Arbitrary VarInt where
     arbitrary = VarInt <$> arbitrary
