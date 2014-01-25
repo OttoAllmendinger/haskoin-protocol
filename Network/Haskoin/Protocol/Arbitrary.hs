@@ -80,7 +80,9 @@ instance Arbitrary Tx where
 
 instance Arbitrary CoinbaseTx where
     arbitrary = CoinbaseTx <$> arbitrary
+                           <*> (return $ OutPoint 0 0xffffffff)
                            <*> arbitrary
+                           <*> (return $ 0xffffffff)
                            <*> (listOf arbitrary)
                            <*> arbitrary
 
@@ -95,7 +97,7 @@ instance Arbitrary TxOut where
 
 instance Arbitrary OutPoint where
     arbitrary = OutPoint <$> arbitrary
-                         <*> (choose (0,2147483647))
+                         <*> arbitrary
 
 instance Arbitrary Block where
     arbitrary = do
@@ -106,8 +108,11 @@ instance Arbitrary Block where
             vectorOf l arbitrary
         return $ Block h c t
 
+instance Arbitrary PushDataType where
+    arbitrary = elements [ OPCODE, OPDATA1, OPDATA2, OPDATA4 ]
+
 instance Arbitrary ScriptOp where
-    arbitrary = oneof [ OP_PUSHDATA <$> nonEmptyBS
+    arbitrary = oneof [ opPushData <$> nonEmptyBS
                       , return OP_0
                       , return OP_1NEGATE
                       , return OP_1

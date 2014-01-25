@@ -29,6 +29,8 @@ module Network.Haskoin.Protocol
   -- <http://en.bitcoin.it/wiki/Script>
 , Script(..)
 , ScriptOp(..)
+, PushDataType(..)
+, opPushData
 , getScriptOps
 , putScriptOps
 , decodeScriptOps
@@ -37,6 +39,7 @@ module Network.Haskoin.Protocol
   -- *Transactions
 , Tx(..)
 , txid
+, cbid
 , CoinbaseTx(..)
 , TxIn(..)
 , TxOut(..)
