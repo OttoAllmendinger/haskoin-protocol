@@ -39,6 +39,7 @@ library
                        Network.Haskoin.Protocol.Alert, 
                        Network.Haskoin.Protocol.MessageHeader, 
                        Network.Haskoin.Protocol.Block, 
+                       Network.Haskoin.Protocol.MerkleBlock, 
                        Network.Haskoin.Protocol.Version, 
                        Network.Haskoin.Protocol.GetData, 
                        Network.Haskoin.Protocol.Headers, 

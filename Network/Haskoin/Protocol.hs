@@ -10,12 +10,14 @@ module Network.Haskoin.Protocol
   Block(..)
 , BlockLocator
 , GetBlocks(..)
+, blockid
 
   -- * Block Headers
 , BlockHeader(..)
 , GetHeaders(..)
 , Headers(..)
 , BlockHeaderCount
+, headerid
 
   -- * Requesting data
 , GetData(..)
@@ -47,6 +49,10 @@ module Network.Haskoin.Protocol
 , encodeTxid
 , decodeTxid
 
+  -- * Merkle trees and bloom filters
+, MerkleBlock(..)
+, merkleblockid
+
   -- * Network types
 , VarInt(..)
 , VarString(..)
@@ -69,6 +75,7 @@ import Network.Haskoin.Protocol.Addr
 import Network.Haskoin.Protocol.Alert
 import Network.Haskoin.Protocol.BlockHeader
 import Network.Haskoin.Protocol.Block
+import Network.Haskoin.Protocol.MerkleBlock
 import Network.Haskoin.Protocol.GetBlocks
 import Network.Haskoin.Protocol.GetData
 import Network.Haskoin.Protocol.GetHeaders

@@ -108,6 +108,15 @@ instance Arbitrary Block where
             vectorOf l arbitrary
         return $ Block h c t
 
+instance Arbitrary MerkleBlock where
+    arbitrary = do
+        h <- arbitrary
+        ntx <- arbitrary
+        hashes <- arbitrary
+        c <- choose (1,10)
+        flags <- vectorOf (c*8) arbitrary
+        return $ MerkleBlock h ntx hashes flags
+
 instance Arbitrary PushDataType where
     arbitrary = elements [ OPCODE, OPDATA1, OPDATA2, OPDATA4 ]
 

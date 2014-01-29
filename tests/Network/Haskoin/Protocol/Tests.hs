@@ -33,6 +33,7 @@ tests =
         , testProperty "CoinbaseTx" (metaGetPut :: CoinbaseTx -> Bool)
         , testProperty "BlockHeader" (metaGetPut :: BlockHeader -> Bool)
         , testProperty "Block" (metaGetPut :: Block -> Bool)
+        , testProperty "MerkleBlock" (metaGetPut :: MerkleBlock -> Bool)
         , testProperty "GetBlocks" (metaGetPut :: GetBlocks -> Bool)
         , testProperty "GetData" (metaGetPut :: GetData -> Bool)
         , testProperty "GetHeaders" (metaGetPut :: GetHeaders -> Bool)
