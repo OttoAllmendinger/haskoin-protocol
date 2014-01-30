@@ -16,6 +16,7 @@ data InvType
     = InvError -- ^ Error. Data containing this type can be ignored.
     | InvTx    -- ^ InvVector hash is related to a transaction 
     | InvBlock -- ^ InvVector hash is related to a block
+    | InvMerkleBlock -- ^ InvVector has is related to a merkle block
     deriving (Eq, Show)
 
 instance Binary InvType where
@@ -26,12 +27,14 @@ instance Binary InvType where
             0 -> return InvError
             1 -> return InvTx
             2 -> return InvBlock
+            3 -> return InvMerkleBlock
             _ -> fail "bitcoinGet InvType: Invalid Type"
 
     put x = putWord32le $ case x of
-                InvError -> 0
-                InvTx    -> 1
-                InvBlock -> 2
+                InvError       -> 0
+                InvTx          -> 1
+                InvBlock       -> 2
+                InvMerkleBlock -> 3
 
 -- | Invectory vectors represent hashes identifying objects such as a 'Block'
 -- or a 'Tx'. They are sent inside messages to notify other peers about 
