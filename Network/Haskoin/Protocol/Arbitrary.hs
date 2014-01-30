@@ -28,7 +28,7 @@ instance Arbitrary NetworkAddress where
         return $ NetworkAddress s a p
 
 instance Arbitrary InvType where
-    arbitrary = elements [InvError, InvTx, InvBlock]
+    arbitrary = elements [InvError, InvTx, InvBlock, InvMerkleBlock]
 
 instance Arbitrary InvVector where
     arbitrary = InvVector <$> arbitrary <*> (hash256 <$> arbitrary)
