@@ -27,6 +27,7 @@ import Network.Haskoin.Protocol.GetHeaders
 import Network.Haskoin.Protocol.Tx
 import Network.Haskoin.Protocol.Block
 import Network.Haskoin.Protocol.Headers
+import Network.Haskoin.Protocol.BloomFilter
 import Network.Haskoin.Protocol.Ping
 import Network.Haskoin.Protocol.Alert
 
@@ -55,6 +56,9 @@ data Message
     | MBlock Block 
     | MHeaders Headers 
     | MGetAddr 
+    | MFilterLoad FilterLoad
+    | MFilterAdd FilterAdd
+    | MFilterClear
     | MPing Ping 
     | MPong Pong 
     | MAlert Alert
@@ -71,24 +75,27 @@ instance Binary Message where
             (fail $ "get: Invalid message checksum: " ++ (show chk))
         if len > 0 
             then isolate (fromIntegral len) $ case cmd of
-                MCVersion    -> MVersion <$> get
-                MCAddr       -> MAddr <$> get
-                MCInv        -> MInv <$> get
-                MCGetData    -> MGetData <$> get
-                MCNotFound   -> MNotFound <$> get
-                MCGetBlocks  -> MGetBlocks <$> get
-                MCGetHeaders -> MGetHeaders <$> get
-                MCTx         -> MTx <$> get
-                MCBlock      -> MBlock <$> get
-                MCHeaders    -> MHeaders <$> get
-                MCPing       -> MPing <$> get
-                MCPong       -> MPong <$> get
-                MCAlert      -> MAlert <$> get
-                _            -> fail $ "get: Invalid command " ++ (show cmd)
+                MCVersion     -> MVersion <$> get
+                MCAddr        -> MAddr <$> get
+                MCInv         -> MInv <$> get
+                MCGetData     -> MGetData <$> get
+                MCNotFound    -> MNotFound <$> get
+                MCGetBlocks   -> MGetBlocks <$> get
+                MCGetHeaders  -> MGetHeaders <$> get
+                MCTx          -> MTx <$> get
+                MCBlock       -> MBlock <$> get
+                MCHeaders     -> MHeaders <$> get
+                MCFilterLoad  -> MFilterLoad <$> get
+                MCFilterAdd   -> MFilterAdd <$> get
+                MCPing        -> MPing <$> get
+                MCPong        -> MPong <$> get
+                MCAlert       -> MAlert <$> get
+                _             -> fail $ "get: Invalid command " ++ (show cmd)
             else case cmd of
-                MCGetAddr    -> return MGetAddr 
-                MCVerAck     -> return MVerAck
-                _            -> fail $ "get: Invalid command " ++ (show cmd)
+                MCGetAddr     -> return MGetAddr 
+                MCVerAck      -> return MVerAck
+                MCFilterClear -> return MFilterClear
+                _             -> fail $ "get: Invalid command " ++ (show cmd)
 
     put msg = do
         let (cmd, payload) = case msg of
@@ -104,6 +111,9 @@ instance Binary Message where
                 (MBlock m)      -> (MCBlock, encode' m)
                 (MHeaders m)    -> (MCHeaders, encode' m)
                 (MGetAddr)      -> (MCGetAddr, BS.empty)
+                (MFilterLoad m) -> (MCFilterLoad, encode' m)
+                (MFilterAdd m)  -> (MCFilterAdd, encode' m)
+                (MFilterClear)  -> (MCFilterClear, BS.empty)
                 (MPing m)       -> (MCPing, encode' m)
                 (MPong m)       -> (MCPong, encode' m)
                 (MAlert m)      -> (MCAlert, encode' m)

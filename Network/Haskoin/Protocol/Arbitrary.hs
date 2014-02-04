@@ -11,6 +11,8 @@ import Network.Haskoin.Crypto.Arbitrary()
 import Control.Monad
 import Control.Applicative 
 
+import qualified Data.Sequence as S (fromList)
+
 import Network.Haskoin.Protocol
 import Network.Haskoin.Crypto
 
@@ -178,6 +180,9 @@ instance Arbitrary MessageCommand where
                          , MCBlock
                          , MCHeaders
                          , MCGetAddr
+                         , MCFilterLoad
+                         , MCFilterAdd
+                         , MCFilterClear
                          , MCPing
                          , MCPong
                          , MCAlert
@@ -192,18 +197,42 @@ instance Arbitrary MessageHeader where
 instance Arbitrary Message where
     arbitrary = oneof [ MVersion    <$> arbitrary
                       , return MVerAck
-                      , MAddr       <$> arbitrary
-                      , MInv        <$> arbitrary
-                      , MGetData    <$> arbitrary
-                      , MNotFound   <$> arbitrary
-                      , MGetBlocks  <$> arbitrary
-                      , MGetHeaders <$> arbitrary
-                      , MTx         <$> arbitrary
-                      , MBlock      <$> arbitrary
-                      , MHeaders    <$> arbitrary
+                      , MAddr        <$> arbitrary
+                      , MInv         <$> arbitrary
+                      , MGetData     <$> arbitrary
+                      , MNotFound    <$> arbitrary
+                      , MGetBlocks   <$> arbitrary
+                      , MGetHeaders  <$> arbitrary
+                      , MTx          <$> arbitrary
+                      , MBlock       <$> arbitrary
+                      , MHeaders     <$> arbitrary
                       , return MGetAddr
-                      , MPing       <$> arbitrary
-                      , MPong       <$> arbitrary
-                      , MAlert      <$> arbitrary
+                      , MFilterLoad  <$> arbitrary
+                      , MFilterAdd   <$> arbitrary
+                      , return MFilterClear
+                      , MPing        <$> arbitrary
+                      , MPong        <$> arbitrary
+                      , MAlert       <$> arbitrary
                       ]
+
+instance Arbitrary BloomFlags where
+    arbitrary = elements [ BloomUpdateNone
+                         , BloomUpdateAll
+                         , BloomUpdateP2PubKeyOnly
+                         , BloomUpdateMask
+                         ]
+
+instance Arbitrary BloomFilter where
+    arbitrary = BloomFilter <$> (S.fromList <$> arbitrary)
+                            <*> (return False)
+                            <*> (return False)
+                            <*> arbitrary
+                            <*> arbitrary
+                            <*> arbitrary
+                        
+instance Arbitrary FilterLoad where
+    arbitrary = FilterLoad <$> arbitrary
+
+instance Arbitrary FilterAdd where
+    arbitrary = FilterAdd <$> arbitrary
 

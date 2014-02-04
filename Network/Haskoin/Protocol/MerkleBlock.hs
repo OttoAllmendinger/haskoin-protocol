@@ -1,7 +1,4 @@
-module Network.Haskoin.Protocol.MerkleBlock 
-( MerkleBlock(..)
-, merkleblockid
-) where
+module Network.Haskoin.Protocol.MerkleBlock (MerkleBlock(..)) where
 
 import Control.Monad (replicateM, forM_)
 
@@ -50,10 +47,6 @@ instance Binary MerkleBlock where
         let ws = encodeMerkleFlags flags
         put $ VarInt $ fromIntegral $ length ws
         forM_ ws putWord8
-
--- | Compute the hash of a block header
-merkleblockid :: MerkleBlock -> Hash256
-merkleblockid = headerid . merkleHeader
 
 decodeMerkleFlags :: [Word8] -> [Bool]
 decodeMerkleFlags ws = 

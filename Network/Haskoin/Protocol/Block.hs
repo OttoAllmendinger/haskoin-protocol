@@ -1,7 +1,4 @@
-module Network.Haskoin.Protocol.Block 
-( Block(..) 
-, blockid
-) where
+module Network.Haskoin.Protocol.Block (Block(..)) where
 
 import Control.Monad (replicateM, forM_)
 
@@ -10,7 +7,6 @@ import Data.Binary (Binary, get, put)
 import Network.Haskoin.Protocol.Tx
 import Network.Haskoin.Protocol.VarInt
 import Network.Haskoin.Protocol.BlockHeader
-import Network.Haskoin.Crypto (Hash256)
 
 -- | Data type describing a block in the bitcoin protocol. Blocks are sent in
 -- response to 'GetData' messages that are requesting information from a
@@ -39,8 +35,4 @@ instance Binary Block where
         put $ VarInt $ fromIntegral $ (length txs) + 1
         put cb
         forM_ txs put
-
--- | Compute the hash of a block
-blockid :: Block -> Hash256
-blockid = headerid . blockHeader
 

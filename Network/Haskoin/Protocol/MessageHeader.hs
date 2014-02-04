@@ -43,6 +43,9 @@ data MessageCommand
     | MCBlock 
     | MCHeaders 
     | MCGetAddr 
+    | MCFilterLoad
+    | MCFilterAdd
+    | MCFilterClear
     | MCPing 
     | MCPong 
     | MCAlert
@@ -53,22 +56,25 @@ instance Binary MessageCommand where
     get = go =<< getByteString 12
       where 
         go bs = case unpackCommand bs of
-            "version"    -> return MCVersion
-            "verack"     -> return MCVerAck
-            "addr"       -> return MCAddr
-            "inv"        -> return MCInv
-            "getdata"    -> return MCGetData
-            "notfound"   -> return MCNotFound
-            "getblocks"  -> return MCGetBlocks
-            "getheaders" -> return MCGetHeaders
-            "tx"         -> return MCTx
-            "block"      -> return MCBlock
-            "headers"    -> return MCHeaders
-            "getaddr"    -> return MCGetAddr
-            "ping"       -> return MCPing
-            "pong"       -> return MCPong
-            "alert"      -> return MCAlert
-            _            -> fail "get MessageCommand : Invalid command"
+            "version"     -> return MCVersion
+            "verack"      -> return MCVerAck
+            "addr"        -> return MCAddr
+            "inv"         -> return MCInv
+            "getdata"     -> return MCGetData
+            "notfound"    -> return MCNotFound
+            "getblocks"   -> return MCGetBlocks
+            "getheaders"  -> return MCGetHeaders
+            "tx"          -> return MCTx
+            "block"       -> return MCBlock
+            "headers"     -> return MCHeaders
+            "getaddr"     -> return MCGetAddr
+            "filterload"  -> return MCFilterLoad
+            "filteradd"   -> return MCFilterAdd
+            "filterclear" -> return MCFilterClear
+            "ping"        -> return MCPing
+            "pong"        -> return MCPong
+            "alert"       -> return MCAlert
+            _             -> fail "get MessageCommand : Invalid command"
 
     put mc = putByteString $ packCommand $ case mc of
         MCVersion     -> "version"
@@ -83,6 +89,9 @@ instance Binary MessageCommand where
         MCBlock       -> "block"
         MCHeaders     -> "headers"
         MCGetAddr     -> "getaddr"
+        MCFilterLoad  -> "filterload"
+        MCFilterAdd   -> "filteradd"
+        MCFilterClear -> "filterclear"
         MCPing        -> "ping"
         MCPong        -> "pong"
         MCAlert       -> "alert"

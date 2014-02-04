@@ -38,6 +38,8 @@ tests =
         , testProperty "GetData" (metaGetPut :: GetData -> Bool)
         , testProperty "GetHeaders" (metaGetPut :: GetHeaders -> Bool)
         , testProperty "Headers" (metaGetPut :: Headers -> Bool)
+        , testProperty "FilterLoad" (metaGetPut :: FilterLoad -> Bool)
+        , testProperty "FilterAdd" (metaGetPut :: FilterAdd -> Bool)
         , testProperty "NotFound" (metaGetPut :: NotFound -> Bool)
         , testProperty "Ping" (metaGetPut :: Ping -> Bool)
         , testProperty "Pong" (metaGetPut :: Pong -> Bool)

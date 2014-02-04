@@ -1,6 +1,6 @@
 module Network.Haskoin.Protocol.BlockHeader 
 ( BlockHeader(..) 
-, headerid
+, blockid
 ) where
 
 import Control.Applicative ((<$>),(<*>))
@@ -58,6 +58,6 @@ instance Binary BlockHeader where
         putWord32le n 
 
 -- | Compute the hash of a block header
-headerid :: BlockHeader -> Hash256
-headerid = doubleHash256 . encode'
+blockid :: BlockHeader -> Hash256
+blockid = doubleHash256 . encode'
 
