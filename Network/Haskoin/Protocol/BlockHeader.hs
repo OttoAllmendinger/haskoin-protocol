@@ -1,4 +1,7 @@
-module Network.Haskoin.Protocol.BlockHeader ( BlockHeader(..) ) where
+module Network.Haskoin.Protocol.BlockHeader 
+( BlockHeader(..) 
+, blockid
+) where
 
 import Control.Applicative ((<$>),(<*>))
 
@@ -7,7 +10,8 @@ import Data.Binary (Binary, get, put)
 import Data.Binary.Get (getWord32le)
 import Data.Binary.Put (putWord32le)
 
-import Network.Haskoin.Crypto (Hash256)
+import Network.Haskoin.Crypto (Hash256, doubleHash256)
+import Network.Haskoin.Util (encode')
 
 -- | Data type recording information on a 'Block'. The hash of a block is
 -- defined as the hash of this data structure. The block mining process
@@ -52,4 +56,8 @@ instance Binary BlockHeader where
         putWord32le bt
         putWord32le bb
         putWord32le n 
+
+-- | Compute the hash of a block header
+blockid :: BlockHeader -> Hash256
+blockid = doubleHash256 . encode'
 

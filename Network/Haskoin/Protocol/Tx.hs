@@ -5,6 +5,7 @@ module Network.Haskoin.Protocol.Tx
 , OutPoint(..)
 , CoinbaseTx(..)
 , txid
+, cbid
 , encodeTxid
 , decodeTxid
 ) where
@@ -18,7 +19,6 @@ import Data.Binary.Get
     ( getWord32le
     , getWord64le
     , getByteString
-    , skip
     )
 import Data.Binary.Put 
     ( putWord32le
@@ -34,7 +34,12 @@ import qualified Data.ByteString as BS
 import Network.Haskoin.Protocol.VarInt
 import Network.Haskoin.Protocol.Script
 import Network.Haskoin.Crypto (Hash256, doubleHash256)
-import Network.Haskoin.Util (bsToHex, hexToBS, encode', decodeToMaybe)
+import Network.Haskoin.Util 
+    ( bsToHex
+    , hexToBS
+    , encode'
+    , decodeToMaybe
+    )
 
 -- | Data type representing a bitcoin transaction
 data Tx = 
@@ -77,41 +82,49 @@ instance Binary Tx where
 data CoinbaseTx = 
     CoinbaseTx { 
                  -- | Transaction data format version.
-                 cbVersion  :: !Word32
+                 cbVersion    :: !Word32
+                 -- | Previous outpoint. This is ignored for
+                 -- coinbase transactions but preserved for computing
+                 -- the correct txid.
+               , cbPrevOutput :: !OutPoint
                  -- | Data embedded inside the coinbase transaction.
-               , cbData     :: !BS.ByteString
+               , cbData       :: !BS.ByteString
+                 -- | Transaction sequence number. This is ignored for
+                 -- coinbase transactions but preserved for computing
+                 -- the correct txid.
+               , cbInSequence :: !Word32
                  -- | List of transaction outputs.
-               , cbOut      :: ![TxOut]
+               , cbOut        :: ![TxOut]
                  -- | The block number of timestamp at which this 
                  -- transaction is locked.
-               , cbLockTime :: !Word32
+               , cbLockTime   :: !Word32
                } deriving (Eq, Show)
 
 instance Binary CoinbaseTx where
 
-    get = CoinbaseTx <$> getWord32le
-                     <*> (readCoinbase  =<< get)
-                     <*> (replicateList =<< get)
-                     <*> getWord32le
-      where 
-        readCoinbase (VarInt _) = do
-            skip 36 -- skip OutPoint
-            (VarInt len)   <- get
-            coinbase       <- getByteString (fromIntegral len)
-            skip 4  -- skip sequence
-            return coinbase
-        replicateList (VarInt c) = replicateM (fromIntegral c) get
+    get = do
+        v <- getWord32le
+        (VarInt len) <- get
+        unless (len == 1) $ fail "CoinbaseTx get: Input size is not 1"
+        op <- get
+        (VarInt cbLen) <- get
+        cb <- getByteString (fromIntegral cbLen)
+        sq <- getWord32le
+        (VarInt oLen) <- get
+        os <- replicateM (fromIntegral oLen) get
+        lt <- getWord32le
+        return $ CoinbaseTx v op cb sq os lt
 
-    put (CoinbaseTx v cb os l) = do
+    put (CoinbaseTx v op cb sq os lt) = do
         putWord32le v
         put $ VarInt 1
-        put $ OutPoint 0 maxBound
+        put op
         put $ VarInt $ fromIntegral $ BS.length cb
         putByteString cb 
-        putWord32le 0 --sequence number
+        putWord32le sq
         put $ VarInt $ fromIntegral $ length os
         forM_ os put
-        putWord32le l
+        putWord32le lt
 
 -- | Data type representing a transaction input.
 data TxIn = 
@@ -167,14 +180,16 @@ instance Show OutPoint where
 instance Binary OutPoint where
     get = do
         (h,i) <- liftM2 (,) get getWord32le
-        unless (i <= 2147483647) $ fail $
-            "Invalid OutPoint index: " ++ (show i)
         return $ OutPoint h i
     put (OutPoint h i) = put h >> putWord32le i
 
--- | Computed the hash of a transaction.
+-- | Computes the hash of a transaction.
 txid :: Tx -> Hash256
 txid = doubleHash256 . encode' 
+
+-- | Computes the hash of a coinbase transaction.
+cbid :: CoinbaseTx -> Hash256
+cbid = doubleHash256 . encode' 
 
 -- | Encodes a transaction hash as little endian in HEX format.
 -- This is mostly used for displaying transaction ids. Internally, these ids

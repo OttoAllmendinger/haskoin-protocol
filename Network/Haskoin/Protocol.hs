@@ -16,6 +16,7 @@ module Network.Haskoin.Protocol
 , GetHeaders(..)
 , Headers(..)
 , BlockHeaderCount
+, blockid
 
   -- * Requesting data
 , GetData(..)
@@ -29,6 +30,8 @@ module Network.Haskoin.Protocol
   -- <http://en.bitcoin.it/wiki/Script>
 , Script(..)
 , ScriptOp(..)
+, PushDataType(..)
+, opPushData
 , getScriptOps
 , putScriptOps
 , decodeScriptOps
@@ -37,12 +40,22 @@ module Network.Haskoin.Protocol
   -- *Transactions
 , Tx(..)
 , txid
+, cbid
 , CoinbaseTx(..)
 , TxIn(..)
 , TxOut(..)
 , OutPoint(..)
 , encodeTxid
 , decodeTxid
+
+  -- * Merkle trees and bloom filters
+, MerkleBlock(..)
+
+ -- * Bloom Filter
+, BloomFlags(..)
+, BloomFilter(..)
+, FilterLoad(..)
+, FilterAdd(..)
 
   -- * Network types
 , VarInt(..)
@@ -66,6 +79,7 @@ import Network.Haskoin.Protocol.Addr
 import Network.Haskoin.Protocol.Alert
 import Network.Haskoin.Protocol.BlockHeader
 import Network.Haskoin.Protocol.Block
+import Network.Haskoin.Protocol.MerkleBlock
 import Network.Haskoin.Protocol.GetBlocks
 import Network.Haskoin.Protocol.GetData
 import Network.Haskoin.Protocol.GetHeaders
@@ -81,4 +95,5 @@ import Network.Haskoin.Protocol.Tx
 import Network.Haskoin.Protocol.VarInt
 import Network.Haskoin.Protocol.VarString
 import Network.Haskoin.Protocol.Version
+import Network.Haskoin.Protocol.BloomFilter
 

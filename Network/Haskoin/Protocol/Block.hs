@@ -1,4 +1,4 @@
-module Network.Haskoin.Protocol.Block ( Block(..) ) where
+module Network.Haskoin.Protocol.Block (Block(..)) where
 
 import Control.Monad (replicateM, forM_)
 
@@ -13,11 +13,11 @@ import Network.Haskoin.Protocol.BlockHeader
 -- block hash.
 data Block = 
     Block {
-            -- | Header information for this block
+            -- | Header information for this block.
             blockHeader     :: !BlockHeader
-            -- | Coinbase transaction of this block
+            -- | Coinbase transaction of this block.
           , blockCoinbaseTx :: !CoinbaseTx
-            -- | List of transactions pertaining to this block
+            -- | List of transactions pertaining to this block.
           , blockTxns       :: ![Tx]
           } deriving (Eq, Show)
 
